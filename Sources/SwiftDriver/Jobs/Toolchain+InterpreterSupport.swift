@@ -81,3 +81,14 @@ extension GenericUnixToolchain {
     return envVars
   }
 }
+
+extension WindowsToolchain {
+  public func platformSpecificInterpreterEnvironmentVariables(
+    env: [String : String],
+    parsedOptions: inout ParsedOptions,
+    sdkPath: VirtualPath?,
+    targetInfo: FrontendTargetInfo) throws -> [String: String] {
+    // TODO: See whether Windows needs `platformSpecificInterpreterEnvironmentVariables`
+    return [:]
+  }
+}

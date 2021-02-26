@@ -91,7 +91,7 @@ extension Driver {
       jobsBeforeCompiles.append(job)
     }
 
-    var  compileJobGroups = [CompileJobGroup]()
+    var compileJobGroups = [CompileJobGroup]()
     func addCompileJobGroup(_ group: CompileJobGroup) {
       compileJobGroups.append(group)
     }

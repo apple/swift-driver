@@ -169,10 +169,10 @@ extension Array where Element == Job.ArgTemplate {
   public var joinedUnresolvedArguments: String {
     return self.map {
       switch $0 {
-        case .flag(let string):
-          return string.spm_shellEscaped()
-        case .path(let path):
-          return path.name.spm_shellEscaped()
+      case .flag(let string):
+        return string.spm_shellEscaped()
+      case .path(let path):
+        return path.name.spm_shellEscaped()
       case .responseFilePath(let path):
         return "@\(path.name.spm_shellEscaped())"
       case let .joinedOptionAndPath(option, path):

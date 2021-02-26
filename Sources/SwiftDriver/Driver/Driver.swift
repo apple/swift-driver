@@ -311,7 +311,7 @@ public struct Driver {
   public static let stderrDiagnosticsHandler: DiagnosticsEngine.DiagnosticsHandler = { diagnostic in
     let stream = stderrStream
     if !(diagnostic.location is UnknownLocation) {
-        stream <<< diagnostic.location.description <<< ": "
+      stream <<< diagnostic.location.description <<< ": "
     }
 
     switch diagnostic.message.behavior {
@@ -324,7 +324,7 @@ public struct Driver {
     case .remark:
       stream <<< "remark: "
     case .ignored:
-        break
+      break
     }
 
     stream <<< diagnostic.localizedDescription <<< "\n"
@@ -386,7 +386,7 @@ public struct Driver {
 
     // Determine the compilation mode.
     self.compilerMode = try Self.computeCompilerMode(&parsedOptions, driverKind: driverKind, diagnosticsEngine: diagnosticEngine)
-    
+
     self.shouldAttemptIncrementalCompilation = Self.shouldAttemptIncrementalCompilation(&parsedOptions,
                                                                                         diagnosticEngine: diagnosticsEngine,
                                                                                         compilerMode: compilerMode)
@@ -492,6 +492,9 @@ public struct Driver {
     self.numParallelJobs = Self.determineNumParallelJobs(&parsedOptions, diagnosticsEngine: diagnosticEngine, env: env)
 
     Self.validateWarningControlArgs(&parsedOptions, diagnosticEngine: diagnosticEngine)
+    Self.validateCRuntimeArgs(&parsedOptions,
+                              diagnosticEngine: diagnosticsEngine,
+                              targetTriple: self.frontendTargetInfo.target.triple)
     Self.validateProfilingArgs(&parsedOptions,
                                fileSystem: fileSystem,
                                workingDirectory: workingDirectory,
@@ -795,7 +798,7 @@ extension Driver {
   ///
   /// - Parameter content: response file's content to be tokenized.
   private static func tokenizeResponseFile(_ content: String) -> [String] {
-    #if !os(macOS) && !os(Linux) && !os(Android)
+    #if !os(macOS) && !os(Linux) && !os(Android) && !os(Windows)
       #warning("Response file tokenization unimplemented for platform; behavior may be incorrect")
     #endif
     return content.split { $0 == "\n" || $0 == "\r\n" }
@@ -1688,6 +1691,11 @@ extension Driver {
         sanitizerSupported = false
       }
 
+      // Currently only ASAN is supported on Windows.
+      if sanitizer != .address && targetTriple.isWindows {
+        sanitizerSupported = false
+      }
+
       if !sanitizerSupported {
         diagnosticEngine.emit(
           .error_unsupported_opt_for_target(
@@ -2051,6 +2059,14 @@ extension Driver {
     }
   }
 
+  static func validateCRuntimeArgs(_ parsedOptions: inout ParsedOptions,
+                                   diagnosticEngine: DiagnosticsEngine,
+                                   targetTriple: Triple) {
+    if parsedOptions.hasArgument(.libc) && !targetTriple.isWindows {
+      diagnosticEngine.emit(.error_unsupported_opt_for_target(arg: "-libc", target: targetTriple))
+    }
+  }
+
   static func validateProfilingArgs(_ parsedOptions: inout ParsedOptions,
                                     fileSystem: FileSystem,
                                     workingDirectory: AbsolutePath?,
@@ -2138,7 +2154,7 @@ extension Triple {
     case .wasi:
       return WebAssemblyToolchain.self
     case .win32:
-      fatalError("Windows target not supported yet")
+      return WindowsToolchain.self
     default:
       diagnosticsEngine.emit(.error_unknown_target(triple))
       throw Diagnostics.fatalError
@@ -2151,7 +2167,7 @@ extension Driver {
   #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
   static let defaultToolchainType: Toolchain.Type = DarwinToolchain.self
   #elseif os(Windows)
-  static let defaultToolchainType: Toolchain.Type = { fatalError("Windows target not supported yet") }()
+  static let defaultToolchainType: Toolchain.Type = WindowsToolchain.self
   #else
   static let defaultToolchainType: Toolchain.Type = GenericUnixToolchain.self
   #endif

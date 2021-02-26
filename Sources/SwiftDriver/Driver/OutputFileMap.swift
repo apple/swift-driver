@@ -138,7 +138,7 @@ public struct OutputFileMap: Hashable, Codable {
     try fileSystem.writeFileContents(file, bytes: ByteString(contents))
   }
 
-  /// Human-readable texual representation
+  /// Human-readable textual representation
   var description: String {
     var result = ""
     func outputPairDescription(inputPath: VirtualPath, outputPair: (FileType, VirtualPath))
@@ -229,7 +229,8 @@ fileprivate struct OutputFileMapJSON: Codable {
 
   /// Converts into virtual path entries.
   func toVirtualOutputFileMap() throws -> [VirtualPath : [FileType : VirtualPath]] {
-    Dictionary(try entries.map { input, entry in
+    // TODO: Remove the filter after swift-tools-support-core#191
+    Dictionary(try entries.filter { $0.0 != "" }.map { input, entry in
       (try VirtualPath(path: input), try entry.paths.mapValues(VirtualPath.init(path:)))
     }, uniquingKeysWith: { $1 })
   }

@@ -26,6 +26,20 @@ final class NonincrementalCompilationTests: XCTestCase {
 
     try XCTAssertEqual(buildRecord.buildTime,
                        Date(legacyDriverSecsAndNanos: [1570318779, 32358000]))
+  #if os(Windows)
+    try XCTAssertEqual(buildRecord.inputInfos,
+                       [
+                        VirtualPath(path: "C:\\AS\\repos\\swift-driver\\sandbox\\sandbox\\sandbox\\file2.swift"):
+                          InputInfo(status: .needsCascadingBuild,
+                                    previousModTime: Date(legacyDriverSecsAndNanos: [1570318778, 0])),
+                        VirtualPath(path: "C:\\AS\\repos\\swift-driver\\sandbox\\sandbox\\sandbox\\main.swift"):
+                          InputInfo(status: .upToDate,
+                                    previousModTime: Date(legacyDriverSecsAndNanos: [1570083660, 0])),
+                        VirtualPath(path: "E:\\gazorp.swift"):
+                          InputInfo(status: .needsNonCascadingBuild,
+                                    previousModTime:  Date(legacyDriverSecsAndNanos: [0, 0]))
+                       ])
+  #else
     try XCTAssertEqual(buildRecord.inputInfos,
                        [
                         VirtualPath(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/file2.swift"):
@@ -38,6 +52,7 @@ final class NonincrementalCompilationTests: XCTestCase {
                           InputInfo(status: .needsNonCascadingBuild,
                                     previousModTime:  Date(legacyDriverSecsAndNanos: [0, 0]))
                        ])
+  #endif
   }
 
   func testBuildRecordWithoutOptionsReading() throws {
@@ -51,11 +66,25 @@ final class NonincrementalCompilationTests: XCTestCase {
 
     try XCTAssertEqual(buildRecord.buildTime,
                        Date(legacyDriverSecsAndNanos: [1570318779, 32358000]))
+  #if os(Windows)
+    try XCTAssertEqual(buildRecord.inputInfos,
+                       [
+                        VirtualPath(path: "C:\\repos\\swift-driver\\sandbox\\sandbox\\sandbox\\file2.swift"):
+                          InputInfo(status: .needsCascadingBuild,
+                                    previousModTime: Date(legacyDriverSecsAndNanos: [1570318778, 0])),
+                        VirtualPath(path: "C:\\repos\\swift-driver\\sandbox\\sandbox\\sandbox\\main.swift"):
+                          InputInfo(status: .upToDate,
+                                    previousModTime: Date(legacyDriverSecsAndNanos: [1570083660, 0])),
+                        VirtualPath(path: "E:\\gazorp.swift"):
+                          InputInfo(status: .needsNonCascadingBuild,
+                                    previousModTime:  Date(legacyDriverSecsAndNanos: [0, 0]))
+                       ])
+  #else
     try XCTAssertEqual(buildRecord.inputInfos,
                        [
                         VirtualPath(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/file2.swift"):
                           InputInfo(status: .needsCascadingBuild,
-                                    previousModTime: Date(legacyDriverSecsAndNanos: [1570318778, 0])),
+                                   previousModTime: Date(legacyDriverSecsAndNanos: [1570318778, 0])),
                         VirtualPath(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/main.swift"):
                           InputInfo(status: .upToDate,
                                     previousModTime: Date(legacyDriverSecsAndNanos: [1570083660, 0])),
@@ -63,6 +92,7 @@ final class NonincrementalCompilationTests: XCTestCase {
                           InputInfo(status: .needsNonCascadingBuild,
                                     previousModTime:  Date(legacyDriverSecsAndNanos: [0, 0]))
                        ])
+  #endif
   }
 
   func testReadBinarySourceFileDependencyGraph() throws {
@@ -151,7 +181,11 @@ final class NonincrementalCompilationTests: XCTestCase {
           XCTAssertFalse(foundEdge)
           foundEdge = true
 
+        #if os(Windows)
+          XCTAssertEqual(defName, "C:\\Users\\owenvoorhees\\Desktop\\hello.swiftdeps")
+        #else
           XCTAssertEqual(defName, "/Users/owenvoorhees/Desktop/hello.swiftdeps")
+        #endif
           XCTAssertEqual(defNode.fingerprint, "38b457b424090ac2e595be0e5f7e3b5b")
 
           XCTAssertEqual(useContext, "5hello1AC")
@@ -202,9 +236,15 @@ final class NonincrementalCompilationTests: XCTestCase {
   func testReadAndWriteBuildRecord() throws {
     let version = "Apple Swift version 5.1 (swiftlang-1100.0.270.13 clang-1100.0.33.7)"
     let options = "abbbfbcaf36b93e58efaadd8271ff142"
+  #if os(Windows)
+    let file2 = "C:\\repos\\swift-driver\\sandbox\\sandbox\\sandbox\\file2.swift"
+    let main = "C:\\repos\\swift-driver\\sandbox\\sandbox\\sandbox\\main.swift"
+    let gazorp = "E:\\gazorp.swift"
+  #else
     let file2 = "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/file2.swift"
     let main = "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/main.swift"
     let gazorp = "/Volumes/gazorp.swift"
+  #endif
     let inputString =
       """
       version: "\(version)"
@@ -325,7 +365,12 @@ final class NonincrementalCompilationTests: XCTestCase {
 
 final class IncrementalCompilationTests: XCTestCase {
 
+#if os(Windows)
+  var tempDir: AbsolutePath = AbsolutePath(ProcessEnv.vars["TEMP"]!)
+#else
   var tempDir: AbsolutePath = AbsolutePath("/tmp")
+#endif
+
   var derivedDataDir: AbsolutePath {
     tempDir.appending(component: "derivedData")
   }
@@ -709,7 +754,11 @@ final class IncrementalCompilationTests: XCTestCase {
 
   private func replace(contentsOf name: String, with replacement: String ) {
     print("*** replacing \(name) ***", to: &stderrStream); stderrStream.flush()
-    let path = try! XCTUnwrap(inputPathsAndContents.filter {$0.0.pathString.contains("/" + name + ".swift")}.first).0
+  #if os(Windows)
+    let path = try! XCTUnwrap(inputPathsAndContents.filter {$0.0.pathString.contains("\\\(name).swift")}.first).0
+  #else
+    let path = try! XCTUnwrap(inputPathsAndContents.filter {$0.0.pathString.contains("/\(name).swift")}.first).0
+  #endif
     let previousContents = try! localFileSystem.readFileContents(path).cString
     try! localFileSystem.writeFileContents(path) { $0 <<< replacement }
     let newContents = try! localFileSystem.readFileContents(path).cString

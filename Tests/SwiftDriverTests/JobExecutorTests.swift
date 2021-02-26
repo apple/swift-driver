@@ -281,11 +281,14 @@ final class JobExecutorTests: XCTestCase {
         $0 <<< "let foo = 1"
       }
 
+    #if os(Windows) // Swift on Windows doesn't support scripting at the time
+      throw XCTSkip()
+    #else
       XCTAssertThrowsError(try driver.run(jobs: jobs)) {
         XCTAssertEqual($0 as? Job.InputError,
                        .inputUnexpectedlyModified(TypedVirtualPath(file: .absolute(main), type: .swift)))
       }
-
+    #endif
     }
   }
 

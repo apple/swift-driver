@@ -109,7 +109,7 @@ class AssertDiagnosticsTests: FailableTestCase {
     }
   }
 
-  func testAssertDriverDiagosotics() throws {
+  func testAssertDriverDiagnostics() throws {
     try assertNoDriverDiagnostics(args: "swiftc", "test.swift")
 
     try assertDriverDiagnostics(args: "swiftc", "test.swift") { driver, verify in

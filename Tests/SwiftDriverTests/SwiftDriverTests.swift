@@ -1528,7 +1528,7 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertEqual(plannedJobs[2].outputs.first!.file, VirtualPath.temporary(RelativePath("foo5.o")))
       XCTAssertTrue(plannedJobs[3].tool.name.contains(driver1.targetTriple.isDarwin ? "ld" : "clang"))
       XCTAssertEqual(plannedJobs[3].outputs.count, 1)
-      XCTAssertEqual(plannedJobs[3].outputs.first!.file, VirtualPath.relative(RelativePath("Test")))
+      XCTAssertEqual(plannedJobs[3].outputs.first!.file, VirtualPath.relative(RelativePath("Test\(executableFileSuffix)")))
     }
 
     // Test 1 partition results in 1 job
@@ -1812,29 +1812,34 @@ final class SwiftDriverTests: XCTestCase {
   }
 
   func testEmitModuleSeparately() throws {
+  #if os(Windows)
+    let foobar = "C:\\foo\\bar\\"
+  #else
+    let foobar = "/foo/bar/"
+  #endif
     do {
-      var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module-path", "/foo/bar/Test.swiftmodule", "-experimental-emit-module-separately", "-emit-library", "-target", "x86_64-apple-macosx10.15"])
+      var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module-path", "\(foobar)Test.swiftmodule", "-experimental-emit-module-separately", "-emit-library"])
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 4)
       XCTAssertTrue(plannedJobs[0].tool.name.contains("swift"))
       XCTAssertTrue(plannedJobs[0].commandLine.contains(.flag("-parse-as-library")))
       XCTAssertEqual(plannedJobs[0].outputs.count, 3)
-      XCTAssertEqual(plannedJobs[0].outputs[0].file, .absolute(AbsolutePath("/foo/bar/Test.swiftmodule")))
-      XCTAssertEqual(plannedJobs[0].outputs[1].file, .absolute(AbsolutePath("/foo/bar/Test.swiftdoc")))
-      XCTAssertEqual(plannedJobs[0].outputs[2].file, .absolute(AbsolutePath("/foo/bar/Test.swiftsourceinfo")))
+      XCTAssertEqual(plannedJobs[0].outputs[0].file, .absolute(AbsolutePath("\(foobar)Test.swiftmodule")))
+      XCTAssertEqual(plannedJobs[0].outputs[1].file, .absolute(AbsolutePath("\(foobar)Test.swiftdoc")))
+      XCTAssertEqual(plannedJobs[0].outputs[2].file, .absolute(AbsolutePath("\(foobar)Test.swiftsourceinfo")))
     }
 
     do {
       // We don't expect partial jobs when asking only for the swiftmodule with
       // -experimental-emit-module-separately.
-      var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module-path", "/foo/bar/Test.swiftmodule", "-experimental-emit-module-separately"])
+      var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module-path", "\(foobar)Test.swiftmodule", "-experimental-emit-module-separately"])
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 1)
       XCTAssertTrue(plannedJobs[0].tool.name.contains("swift"))
       XCTAssertEqual(plannedJobs[0].outputs.count, 3)
-      XCTAssertEqual(plannedJobs[0].outputs[0].file, .absolute(AbsolutePath("/foo/bar/Test.swiftmodule")))
-      XCTAssertEqual(plannedJobs[0].outputs[1].file, .absolute(AbsolutePath("/foo/bar/Test.swiftdoc")))
-      XCTAssertEqual(plannedJobs[0].outputs[2].file, .absolute(AbsolutePath("/foo/bar/Test.swiftsourceinfo")))
+      XCTAssertEqual(plannedJobs[0].outputs[0].file, .absolute(AbsolutePath("\(foobar)Test.swiftmodule")))
+      XCTAssertEqual(plannedJobs[0].outputs[1].file, .absolute(AbsolutePath("\(foobar)Test.swiftdoc")))
+      XCTAssertEqual(plannedJobs[0].outputs[2].file, .absolute(AbsolutePath("\(foobar)Test.swiftsourceinfo")))
     }
 
     do {
@@ -2361,6 +2366,9 @@ final class SwiftDriverTests: XCTestCase {
 
   // Test cases ported from Driver/macabi-environment.swift
   func testDarwinSDKVersioning() throws {
+  #if os(Windows)
+    throw XCTSkip("currently unable to build against Darwin SDK on Windows")
+  #endif
     try withTemporaryDirectory { tmpDir in
       let sdk1 = tmpDir.appending(component: "MacOSX10.15.versioned.sdk")
       try localFileSystem.writeFileContents(sdk1.appending(component: "SDKSettings.json")) {
@@ -2518,6 +2526,9 @@ final class SwiftDriverTests: XCTestCase {
   }
 
   func testDarwinLinkerPlatformVersion() throws {
+  #if os(Windows)
+    throw XCTSkip("currently unable to build against Darwin SDK on Windows")
+  #endif
     do {
       var driver = try Driver(args: ["swiftc",
                                      "-target", "x86_64-apple-macos10.15",
@@ -2689,11 +2700,11 @@ final class SwiftDriverTests: XCTestCase {
         XCTAssertEqual(plannedJobs.count, 5)
         XCTAssertEqual(generateDSYMJob.outputs.last?.file, try VirtualPath(path: "Test.dSYM"))
       } else {
-        XCTAssertEqual(plannedJobs.count, 6)
+        XCTAssertEqual(plannedJobs.count, driver.targetTriple.isWindows ? 5 : 6)
         XCTAssertFalse(plannedJobs.map { $0.kind }.contains(.generateDSYM))
       }
 
-      XCTAssertTrue(cmd.contains(.path(try VirtualPath(path: "Test"))))
+      XCTAssertTrue(cmd.contains(.path(try VirtualPath(path: "Test\(executableFileSuffix)"))))
     }
   }
 
@@ -2875,23 +2886,23 @@ final class SwiftDriverTests: XCTestCase {
     XCTAssertEqual(output,
     """
     digraph Jobs {
-      "compile (swift-frontend)" [style=bold];
+      "compile (swift-frontend\(executableFileSuffix))" [style=bold];
       "test.swift" [fontsize=12];
-      "test.swift" -> "compile (swift-frontend)" [color=blue];
+      "test.swift" -> "compile (swift-frontend\(executableFileSuffix))" [color=blue];
       "test.o" [fontsize=12];
-      "compile (swift-frontend)" -> "test.o" [color=green];
+      "compile (swift-frontend\(executableFileSuffix))" -> "test.o" [color=green];
       "test.swiftmodule" [fontsize=12];
-      "compile (swift-frontend)" -> "test.swiftmodule" [color=green];
+      "compile (swift-frontend\(executableFileSuffix))" -> "test.swiftmodule" [color=green];
       "test.swiftdoc" [fontsize=12];
-      "compile (swift-frontend)" -> "test.swiftdoc" [color=green];
-      "mergeModule (swift-frontend)" [style=bold];
-      "test.swiftmodule" -> "mergeModule (swift-frontend)" [color=blue];
-      "mergeModule (swift-frontend)" -> "test.swiftmodule" [color=green];
-      "mergeModule (swift-frontend)" -> "test.swiftdoc" [color=green];
-      "link (\(dynamicLinker))" [style=bold];
-      "test.o" -> "link (\(dynamicLinker))" [color=blue];
-      "test" [fontsize=12];
-      "link (\(dynamicLinker))" -> "test" [color=green];
+      "compile (swift-frontend\(executableFileSuffix))" -> "test.swiftdoc" [color=green];
+      "mergeModule (swift-frontend\(executableFileSuffix))" [style=bold];
+      "test.swiftmodule" -> "mergeModule (swift-frontend\(executableFileSuffix))" [color=blue];
+      "mergeModule (swift-frontend\(executableFileSuffix))" -> "test.swiftmodule" [color=green];
+      "mergeModule (swift-frontend\(executableFileSuffix))" -> "test.swiftdoc" [color=green];
+      "link (\(dynamicLinker)\(executableFileSuffix))" [style=bold];
+      "test.o" -> "link (\(dynamicLinker)\(executableFileSuffix))" [color=blue];
+      "test\(executableFileSuffix)" [fontsize=12];
+      "link (\(dynamicLinker)\(executableFileSuffix))" -> "test\(executableFileSuffix)" [color=green];
     }
 
     """)
@@ -4117,15 +4128,28 @@ final class SwiftDriverTests: XCTestCase {
 
   func testFrontendTargetInfoWithWorkingDirectory() throws {
     do {
+    #if os(Windows)
+      var driver = try Driver(args: ["swiftc", "-typecheck", "foo.swift",
+                                     "-resource-dir", "resource/dir",
+                                     "-sdk", "sdk",
+                                     "-working-directory", "C:\\absolute\\path"])
+    #else
       var driver = try Driver(args: ["swiftc", "-typecheck", "foo.swift",
                                      "-resource-dir", "resource/dir",
                                      "-sdk", "sdk",
                                      "-working-directory", "/absolute/path"])
+    #endif
       let plannedJobs = try driver.planBuild()
       let job = plannedJobs[0]
+
+    #if os(Windows)
+      XCTAssertTrue(job.commandLine.contains(.path(.absolute(.init("C:\\absolute\\path\\resource\\dir")))))
+      XCTAssertTrue(job.commandLine.contains(.path(.absolute(.init("C:\\absolute\\path\\sdk")))))
+    #else
       XCTAssertTrue(job.commandLine.contains(.path(.absolute(.init("/absolute/path/resource/dir")))))
-      XCTAssertFalse(job.commandLine.contains(.path(.relative(.init("resource/dir")))))
       XCTAssertTrue(job.commandLine.contains(.path(.absolute(.init("/absolute/path/sdk")))))
+    #endif
+      XCTAssertFalse(job.commandLine.contains(.path(.relative(.init("resource/dir")))))
       XCTAssertFalse(job.commandLine.contains(.path(.relative(.init("sdk")))))
     }
   }
@@ -4161,12 +4185,17 @@ final class SwiftDriverTests: XCTestCase {
   }
 
   func testFilelist() throws {
+    #if os(Windows)
+      let triple = "x86_64-unknown-windows-msvc"
+    #else
+      let triple = "x86_64-apple-macosx10.9"
+    #endif
     do {
-      var driver = try Driver(args: ["swiftc", "-emit-module", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", "x86_64-apple-macosx10.9", "-driver-filelist-threshold=0"])
+      var driver = try Driver(args: ["swiftc", "-emit-module", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", triple, "-driver-filelist-threshold=0"])
       let plannedJobs = try driver.planBuild()
 
       let jobA = plannedJobs[0]
-      let flagA = jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
+      let flagA = try XCTUnwrap(jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map")))
       let fileListArgumentA = jobA.commandLine[jobA.commandLine.index(after: flagA)]
       guard case let .path(.fileList(_, fileListA)) = fileListArgumentA else {
         XCTFail("Argument wasn't a filelist")
@@ -4182,7 +4211,7 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertTrue(filesA.keys.contains(.swiftSourceInfoFile))
 
       let jobB = plannedJobs[1]
-      let flagB = jobB.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
+      let flagB = try XCTUnwrap(jobB.commandLine.firstIndex(of: .flag("-supplementary-output-file-map")))
       let fileListArgumentB = jobB.commandLine[jobB.commandLine.index(after: flagB)]
       guard case let .path(.fileList(_, fileListB)) = fileListArgumentB else {
         XCTFail("Argument wasn't a filelist")
@@ -4198,7 +4227,7 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertTrue(filesB.keys.contains(.swiftSourceInfoFile))
 
       let jobC = plannedJobs[2]
-      let flagC = jobC.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
+      let flagC = try XCTUnwrap(jobC.commandLine.firstIndex(of: .flag("-supplementary-output-file-map")))
       let fileListArgumentC = jobC.commandLine[jobC.commandLine.index(after: flagC)]
       guard case let .path(.fileList(_, fileListC)) = fileListArgumentC else {
         XCTFail("Argument wasn't a filelist")
@@ -4215,10 +4244,10 @@ final class SwiftDriverTests: XCTestCase {
     }
 
     do {
-      var driver = try Driver(args: ["swiftc", "-c", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", "x86_64-apple-macosx10.9", "-driver-filelist-threshold=0", "-whole-module-optimization"])
+      var driver = try Driver(args: ["swiftc", "-c", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", triple, "-driver-filelist-threshold=0", "-whole-module-optimization"])
       let plannedJobs = try driver.planBuild()
       let job = plannedJobs[0]
-      let inputsFlag = job.commandLine.firstIndex(of: .flag("-filelist"))!
+      let inputsFlag = try XCTUnwrap(job.commandLine.firstIndex(of: .flag("-filelist")))
       let inputFileListArgument = job.commandLine[job.commandLine.index(after: inputsFlag)]
       guard case let .path(.fileList(_, inputFileList)) = inputFileListArgument else {
         XCTFail("Argument wasn't a filelist")
@@ -4230,7 +4259,7 @@ final class SwiftDriverTests: XCTestCase {
       }
       XCTAssertEqual(inputs, [.relative(RelativePath("a.swift")), .relative(RelativePath("b.swift")), .relative(RelativePath("c.swift"))])
 
-      let outputsFlag = job.commandLine.firstIndex(of: .flag("-output-filelist"))!
+      let outputsFlag = try XCTUnwrap(job.commandLine.firstIndex(of: .flag("-output-filelist")))
       let outputFileListArgument = job.commandLine[job.commandLine.index(after: outputsFlag)]
       guard case let .path(.fileList(_, outputFileList)) = outputFileListArgument else {
         XCTFail("Argument wasn't a filelist")
@@ -4244,10 +4273,10 @@ final class SwiftDriverTests: XCTestCase {
     }
 
     do {
-      var driver = try Driver(args: ["swiftc", "-c", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", "x86_64-apple-macosx10.9", "-driver-filelist-threshold=0", "-whole-module-optimization", "-num-threads", "1"])
+      var driver = try Driver(args: ["swiftc", "-c", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", triple, "-driver-filelist-threshold=0", "-whole-module-optimization", "-num-threads", "1"])
       let plannedJobs = try driver.planBuild()
       let job = plannedJobs[0]
-      let outputsFlag = job.commandLine.firstIndex(of: .flag("-output-filelist"))!
+      let outputsFlag = try XCTUnwrap(job.commandLine.firstIndex(of: .flag("-output-filelist")))
       let outputFileListArgument = job.commandLine[job.commandLine.index(after: outputsFlag)]
       guard case let .path(.fileList(_, outputFileList)) = outputFileListArgument else {
         XCTFail("Argument wasn't a filelist")
@@ -4261,10 +4290,10 @@ final class SwiftDriverTests: XCTestCase {
     }
 
     do {
-      var driver = try Driver(args: ["swiftc", "-c", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", "x86_64-apple-macosx10.9", "-driver-filelist-threshold=0", "-whole-module-optimization", "-num-threads", "1", "-embed-bitcode"])
+      var driver = try Driver(args: ["swiftc", "-c", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", triple, "-driver-filelist-threshold=0", "-whole-module-optimization", "-num-threads", "1", "-embed-bitcode"])
       let plannedJobs = try driver.planBuild()
       let job = plannedJobs[0]
-      let outputsFlag = job.commandLine.firstIndex(of: .flag("-output-filelist"))!
+      let outputsFlag = try XCTUnwrap(job.commandLine.firstIndex(of: .flag("-output-filelist")))
       let outputFileListArgument = job.commandLine[job.commandLine.index(after: outputsFlag)]
       guard case let .path(.fileList(_, outputFileList)) = outputFileListArgument else {
         XCTFail("Argument wasn't a filelist")
@@ -4278,10 +4307,10 @@ final class SwiftDriverTests: XCTestCase {
     }
 
     do {
-      var driver = try Driver(args: ["swiftc", "-emit-library", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", "x86_64-apple-macosx10.9", "-driver-filelist-threshold=0"])
+      var driver = try Driver(args: ["swiftc", "-emit-library", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", triple, "-driver-filelist-threshold=0"])
       let plannedJobs = try driver.planBuild()
       let job = plannedJobs[3]
-      let inputsFlag = job.commandLine.firstIndex(of: .flag("-filelist"))!
+      let inputsFlag = try XCTUnwrap(job.commandLine.firstIndex(of: .flag("-filelist")))
       let inputFileListArgument = job.commandLine[job.commandLine.index(after: inputsFlag)]
       guard case let .path(.fileList(_, inputFileList)) = inputFileListArgument else {
         XCTFail("Argument wasn't a filelist")
@@ -4295,10 +4324,10 @@ final class SwiftDriverTests: XCTestCase {
     }
 
     do {
-      var driver = try Driver(args: ["swiftc", "-emit-library", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", "x86_64-apple-macosx10.9", "-driver-filelist-threshold=0", "-whole-module-optimization", "-num-threads", "1"])
+      var driver = try Driver(args: ["swiftc", "-emit-library", "./a.swift", "./b.swift", "./c.swift", "-module-name", "main", "-target", triple, "-driver-filelist-threshold=0", "-whole-module-optimization", "-num-threads", "1"])
       let plannedJobs = try driver.planBuild()
       let job = plannedJobs[1]
-      let inputsFlag = job.commandLine.firstIndex(of: .flag("-filelist"))!
+      let inputsFlag = try XCTUnwrap(job.commandLine.firstIndex(of: .flag("-filelist")))
       let inputFileListArgument = job.commandLine[job.commandLine.index(after: inputsFlag)]
       guard case let .path(.fileList(_, inputFileList)) = inputFileListArgument else {
         XCTFail("Argument wasn't a filelist")
@@ -4316,7 +4345,7 @@ final class SwiftDriverTests: XCTestCase {
       let plannedJobs = try driver.planBuild()
 
       let jobA = plannedJobs[0]
-      let flagA = jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
+      let flagA = try XCTUnwrap(jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map")))
       let fileListArgumentA = jobA.commandLine[jobA.commandLine.index(after: flagA)]
       guard case let .path(.fileList(_, fileListA)) = fileListArgumentA else {
         XCTFail("Argument wasn't a filelist")
@@ -4329,7 +4358,7 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertEqual(mapA.entries, [.relative(.init("a.swift")): [:]])
 
       let jobB = plannedJobs[1]
-      let flagB = jobB.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
+      let flagB = try XCTUnwrap(jobB.commandLine.firstIndex(of: .flag("-supplementary-output-file-map")))
       let fileListArgumentB = jobB.commandLine[jobB.commandLine.index(after: flagB)]
       guard case let .path(.fileList(_, fileListB)) = fileListArgumentB else {
         XCTFail("Argument wasn't a filelist")
@@ -4347,7 +4376,7 @@ final class SwiftDriverTests: XCTestCase {
       let plannedJobs = try driver.planBuild()
 
       let jobA = plannedJobs[0]
-      let flagA = jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
+      let flagA = try XCTUnwrap(jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map")))
       let fileListArgumentA = jobA.commandLine[jobA.commandLine.index(after: flagA)]
       guard case let .path(.fileList(_, fileListA)) = fileListArgumentA else {
         XCTFail("Argument wasn't a filelist")

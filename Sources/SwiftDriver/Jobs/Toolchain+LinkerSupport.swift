@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2019 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2020 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -50,7 +50,11 @@ extension Toolchain {
         result.append(sdkPath.appending(components: "System", "iOSSupport", "usr", "lib", "swift"))
       }
 
-      result.append(sdkPath.appending(components: "usr", "lib", "swift"))
+      if (triple.isWindows) {
+        result.append(sdkPath.appending(components: "usr", "lib", "swift", "windows"))
+      } else {
+        result.append(sdkPath.appending(components: "usr", "lib", "swift"))
+      }
     }
 
     return result

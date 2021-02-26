@@ -12,7 +12,6 @@
 
 // Use the type system to ensure that dependencies are transitively closed
 // without doing too much work at the leaves of the call tree
-
 public struct Transitively {}
 public struct Directly {}
 

@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2019 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2020 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -102,7 +102,7 @@ public enum Tool: Hashable {
 
 extension Toolchain {
   public var searchPaths: [AbsolutePath] {
-    getEnvSearchPaths(pathString: env["PATH"], currentWorkingDirectory: fileSystem.currentWorkingDirectory)
+    getEnvSearchPaths(pathString: ProcessEnv.path, currentWorkingDirectory: fileSystem.currentWorkingDirectory)
   }
 
   /// Returns the `executablePath`'s directory.
@@ -145,24 +145,25 @@ extension Toolchain {
   /// looks in the `executableDir`, `xcrunFind` or in the `searchPaths`.
   /// - Parameter executable: executable to look for [i.e. `swift`].
   func lookup(executable: String) throws -> AbsolutePath {
+    let filename = executable + executableFileSuffix
     if let overrideString = envVar(forExecutable: executable) {
       return try AbsolutePath(validating: overrideString)
     } else if let toolDir = toolDirectory,
-              let path = lookupExecutablePath(filename: executable, searchPaths: [toolDir]) {
+              let path = lookupExecutablePath(filename: filename, searchPaths: [toolDir]) {
       // Looking for tools from the tools directory.
       return path
-    } else if let path = lookupExecutablePath(filename: executable, searchPaths: [executableDir]) {
+    } else if let path = lookupExecutablePath(filename: filename, searchPaths: [executableDir]) {
       return path
     } else if let path = try? xcrunFind(executable: executable) {
       return path
     } else if !["swift-frontend", "swift"].contains(executable),
               let parentDirectory = try? getToolPath(.swiftCompiler).parentDirectory,
               parentDirectory != executableDir,
-              let path = lookupExecutablePath(filename: executable, searchPaths: [parentDirectory]) {
+              let path = lookupExecutablePath(filename: filename, searchPaths: [parentDirectory]) {
       // If the driver library's client and the frontend are in different directories,
       // try looking for tools next to the frontend.
       return path
-    } else if let path = lookupExecutablePath(filename: executable, searchPaths: searchPaths) {
+    } else if let path = lookupExecutablePath(filename: filename, searchPaths: searchPaths) {
       return path
     } else if executable == "swift-frontend" {
       // Temporary shim: fall back to looking for "swift" before failing.

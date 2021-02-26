@@ -20,9 +20,6 @@ import SwiftOptions
 @_spi(Testing) public final class DarwinToolchain: Toolchain {
   public let env: [String: String]
 
-  /// Doubles as path cache and point for overriding normal lookup
-  private var toolPaths = [Tool: AbsolutePath]()
-
   /// The executor used to run processes used to find tools and retrieve target info.
   public let executor: DriverExecutor
 
@@ -31,6 +28,9 @@ import SwiftOptions
 
   // An externally provided path from where we should find compiler
   public let compilerExecutableDir: AbsolutePath?
+
+  /// Doubles as path cache and point for overriding normal lookup
+  private var toolPaths = [Tool: AbsolutePath]()
 
   // An externally provided path from where we should find tools like ld
   public let toolDirectory: AbsolutePath?

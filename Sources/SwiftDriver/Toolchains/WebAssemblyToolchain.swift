@@ -42,11 +42,13 @@ import SwiftOptions
   /// The file system to use for queries.
   public let fileSystem: FileSystem
 
+  // An externally provided path from where we should find compiler
+  public let compilerExecutableDir: AbsolutePath?
+
   /// Doubles as path cache and point for overriding normal lookup
   private var toolPaths = [Tool: AbsolutePath]()
 
-  public let compilerExecutableDir: AbsolutePath?
-
+  // An externally provided path from where we should find tools like ld
   public let toolDirectory: AbsolutePath?
 
   public let dummyForTestingObjectFormat = Triple.ObjectFormat.wasm

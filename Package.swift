@@ -75,9 +75,9 @@ let package = Package(
       dependencies: ["SwiftOptions", "ArgumentParser", "SwiftToolsSupport-auto"]),
 
     /// The `makeOptions` utility (for importing option definitions).
-    .target(
-      name: "makeOptions",
-      dependencies: []),
+    // .target(
+    //   name: "makeOptions",
+    //   dependencies: []),
   ],
   cxxLanguageStandard: .cxx14
 )
@@ -98,13 +98,13 @@ if ProcessInfo.processInfo.environment["SWIFT_DRIVER_LLBUILD_FWK"] == nil {
 }
 
 if ProcessInfo.processInfo.environment["SWIFTCI_USE_LOCAL_DEPS"] == nil {
-  package.dependencies += [
-    .package(url: "https://github.com/apple/swift-tools-support-core.git", .branch("main")),
-    .package(url: "https://github.com/jpsim/Yams.git", .upToNextMinor(from: "4.0.0")),
-    // The 'swift-argument-parser' version declared here must match that
-    // used by 'swift-package-manager' and 'sourcekit-lsp'. Please coordinate
-    // dependency version changes here with those projects.
-    .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMinor(from: "0.3.1")),
+    package.dependencies += [
+        .package(url: "https://github.com/apple/swift-tools-support-core.git", .branch("main")),
+        .package(url: "https://github.com/jpsim/Yams.git", .upToNextMinor(from: "4.0.0")),
+        // The 'swift-argument-parser' version declared here must match that
+        // used by 'swift-package-manager' and 'sourcekit-lsp'. Please coordinate
+        // dependency version changes here with those projects.
+        .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMinor(from: "0.3.2")),
     ]
 } else {
     package.dependencies += [

@@ -12,6 +12,8 @@
 
 #if os(macOS)
 import Darwin
+#elseif os(Windows)
+import WinSDK.core.file
 #elseif canImport(Glibc)
 import Glibc
 #endif
@@ -45,6 +47,26 @@ func commandLineFitsWithinSystemLimits(path: String, args: [String]) -> Bool {
     commandLineLength += arg.utf8.count + 1
   }
   return commandLineLength < effectiveArgMax
+}
+#elseif os(Windows)
+// See: https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+func commandLineFitsWithinSystemLimits(path: String, args: [String]) -> Bool {
+  // Known limit for all CreateProcess APIs
+  guard (path.utf8.count + 1) + args.map({ $0.utf8.count + 1 }).reduce(0, +) < 32_767 else {
+    return false
+  }
+
+  // Path component length limit for Unicode APIs
+  var maxComponentLength: UInt32 = 0
+  withUnsafeMutablePointer(to: &maxComponentLength) { ptr -> Void in
+    GetVolumeInformationA(nil, nil, 0, nil, ptr, nil, nil, 0)
+  }
+  for component in path.split(separator: #"\"#)
+    where component.utf8.count < maxComponentLength {
+      return false
+  }
+
+  return true
 }
 #else
 func commandLineFitsWithinSystemLimits(path: String, args: [String]) -> Bool {
