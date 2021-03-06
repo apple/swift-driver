@@ -61,6 +61,7 @@ public final class SwiftDriverExecutor: DriverExecutor {
                       delegate: JobExecutionDelegate,
                       numParallelJobs: Int = 1,
                       forceResponseFiles: Bool = false,
+                      skipProcessExecution: Bool,
                       recordedInputModificationDates: [TypedVirtualPath: Date] = [:]
   ) throws {
     let llbuildExecutor = MultiJobExecutor(
@@ -71,7 +72,8 @@ public final class SwiftDriverExecutor: DriverExecutor {
       numParallelJobs: numParallelJobs,
       processSet: processSet,
       forceResponseFiles: forceResponseFiles,
-      recordedInputModificationDates: recordedInputModificationDates)
+      recordedInputModificationDates: recordedInputModificationDates,
+      processType: skipProcessExecution ? DummyProcess.self : TSCBasic.Process.self)
     try llbuildExecutor.execute(env: env, fileSystem: fileSystem)
   }
 
@@ -96,5 +98,35 @@ public final class SwiftDriverExecutor: DriverExecutor {
       }
     }
     return result
+  }
+}
+
+/// C++ driver uses fake processes when skipping driver execution, instead of just skipping execution entirely.
+/// This distinction is important, because it allows parsable output to be emitted for the jobs.
+private struct DummyProcess: ProcessProtocol {
+  private static var nextProcessID: TSCBasic.Process.ProcessID = 0
+
+  let processID: TSCBasic.Process.ProcessID
+  private let arguments: [String]
+  private let env: [String: String]
+
+  private init(arguments: [String], env: [String: String]) {
+    processID = Self.nextProcessID
+    Self.nextProcessID += 1
+
+    self.arguments = arguments
+    self.env = env
+  }
+
+  func waitUntilExit() throws -> ProcessResult {
+    return .init(arguments: arguments,
+                 environment: env,
+                 exitStatus: .terminated(code: 0),
+                 output: .success([UInt8]("Output placeholder\n".utf8CString.map { UInt8($0) })),
+                 stderrOutput: .success([UInt8]("Error placeholder\n".utf8CString.map { UInt8($0) })))
+  }
+
+  static func launchProcess(arguments: [String], env: [String: String]) throws -> DummyProcess {
+    return DummyProcess(arguments: arguments, env: env)
   }
 }

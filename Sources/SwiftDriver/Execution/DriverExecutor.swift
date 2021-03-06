@@ -28,6 +28,15 @@ public protocol DriverExecutor {
                delegate: JobExecutionDelegate,
                numParallelJobs: Int,
                forceResponseFiles: Bool,
+               skipProcessExecution: Bool,
+               recordedInputModificationDates: [TypedVirtualPath: Date]
+  ) throws
+  
+  // FIXME: Stub for SPM
+  func execute(workload: DriverExecutorWorkload,
+               delegate: JobExecutionDelegate,
+               numParallelJobs: Int,
+               forceResponseFiles: Bool,
                recordedInputModificationDates: [TypedVirtualPath: Date]
   ) throws
 
@@ -115,7 +124,7 @@ extension DriverExecutor {
       forceResponseFiles: forceResponseFiles,
       recordedInputModificationDates: recordedInputModificationDates)
   }
-
+  
   static func computeReturnCode(exitStatus: ProcessResult.ExitStatus) -> Int {
     var returnCode: Int
     switch exitStatus {
@@ -127,6 +136,42 @@ extension DriverExecutor {
       #endif
     }
     return returnCode
+  }
+}
+
+// FIXME: stubs to prevent breaking SPM build. If none of these are implemented they will infinite loop until stack overflow.
+// These should be cleaned up quickly.
+extension DriverExecutor {
+  public func execute(
+    workload: DriverExecutorWorkload,
+    delegate: JobExecutionDelegate,
+    numParallelJobs: Int,
+    forceResponseFiles: Bool,
+    recordedInputModificationDates: [TypedVirtualPath: Date]
+  ) throws {
+    return try execute(
+      workload: workload,
+      delegate: delegate,
+      numParallelJobs: numParallelJobs,
+      forceResponseFiles: forceResponseFiles,
+      skipProcessExecution: false,
+      recordedInputModificationDates: recordedInputModificationDates)
+  }
+  
+  public func execute(
+    workload: DriverExecutorWorkload,
+    delegate: JobExecutionDelegate,
+    numParallelJobs: Int,
+    forceResponseFiles: Bool,
+    skipProcessExecution: Bool,
+    recordedInputModificationDates: [TypedVirtualPath: Date]
+  ) throws {
+    return try execute(
+      workload: workload,
+      delegate: delegate,
+      numParallelJobs: numParallelJobs,
+      forceResponseFiles: forceResponseFiles,
+      recordedInputModificationDates: recordedInputModificationDates)
   }
 }
 
