@@ -91,7 +91,7 @@ extension WebAssemblyToolchain {
         if input.type == .autolink {
           return .responseFilePath(input.file)
         } else if input.type == .object {
-          return .path(input.file)
+          return .pathHandle(input.fileHandle)
         } else {
           return nil
         }

@@ -165,7 +165,7 @@ public typealias ExternalBuildArtifacts = (ExternalTargetModulePathMap, ModuleIn
       jobs.append(Job(
         moduleName: moduleId.moduleName,
         kind: .emitModule,
-        tool: .absolute(try toolchain.getToolPath(.swiftCompiler)),
+        tool: try toolchain.getToolPathHandle(.swiftCompiler),
         commandLine: commandLine,
         inputs: inputs,
         primaryInputs: [],
@@ -228,7 +228,7 @@ public typealias ExternalBuildArtifacts = (ExternalTargetModulePathMap, ModuleIn
         jobs.append(Job(
           moduleName: moduleId.moduleName,
           kind: .generatePCM,
-          tool: .absolute(try toolchain.getToolPath(.swiftCompiler)),
+          tool: try toolchain.getToolPathHandle(.swiftCompiler),
           commandLine: commandLine,
           inputs: inputs,
           primaryInputs: [],

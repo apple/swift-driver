@@ -16,7 +16,7 @@ import TSCBasic
 /// Resolver for a job's argument template.
 public final class ArgsResolver {
   /// The map of virtual path to the actual path.
-  public var pathMapping: [VirtualPath: String]
+  public var pathMapping: [VirtualPath.Handle: String]
 
   /// The file system used by the resolver.
   private let fileSystem: FileSystem
@@ -53,7 +53,7 @@ public final class ArgsResolver {
 
   public func resolveArgumentList(for job: Job, forceResponseFiles: Bool,
                                   quotePaths: Bool = false) throws -> ([String], usingResponseFile: Bool) {
-    let tool = try resolve(.path(job.tool), quotePaths: quotePaths)
+    let tool = try resolve(.pathHandle(job.tool), quotePaths: quotePaths)
     var arguments = [tool] + (try job.commandLine.map { try resolve($0, quotePaths: quotePaths) })
     let usingResponseFile = try createResponseFileIfNeeded(for: job, resolvedArguments: &arguments,
                                                            forceResponseFiles: forceResponseFiles)
@@ -67,16 +67,16 @@ public final class ArgsResolver {
     case .flag(let flag):
       return flag
 
-    case .path(let path):
+    case .pathHandle(let path):
       return try lock.withLock {
         return try unsafeResolve(path: path, quotePaths: quotePaths)
       }
 
-    case .responseFilePath(let path):
-      return "@\(try resolve(.path(path), quotePaths: quotePaths))"
+    case .responseFilePathHandle(let path):
+      return "@\(try resolve(.pathHandle(path), quotePaths: quotePaths))"
 
-    case let .joinedOptionAndPath(option, path):
-      return option + (try resolve(.path(path), quotePaths: quotePaths))
+    case let .joinedOptionAndPathHandle(option, path):
+      return option + (try resolve(.pathHandle(path), quotePaths: quotePaths))
 
     case let .squashedArgumentList(option: option, args: args):
       return try option + args.map {
@@ -86,13 +86,14 @@ public final class ArgsResolver {
   }
 
   /// Needs to be done inside of `lock`. Marked unsafe to make that more obvious.
-  private func unsafeResolve(path: VirtualPath, quotePaths: Bool) throws -> String {
+  private func unsafeResolve(path handle: VirtualPath.Handle, quotePaths: Bool) throws -> String {
     // If there was a path mapping, use it.
-    if let actualPath = pathMapping[path] {
+    if let actualPath = pathMapping[handle] {
       return quotePaths ? "'\(actualPath)'" : actualPath
     }
 
     // Return the path from the temporary directory if this is a temporary file.
+    let path = VirtualPath.lookup(handle)
     if path.isTemporary {
       let actualPath = temporaryDirectory.appending(component: path.name)
       switch path {
@@ -112,17 +113,17 @@ public final class ArgsResolver {
       }
 
       let result = actualPath.name
-      pathMapping[path] = result
+      pathMapping[handle] = result
       return quotePaths ? "'\(result)'" : result
     }
 
     // Otherwise, return the path.
     let result = path.name
-    pathMapping[path] = result
+    pathMapping[handle] = result
     return quotePaths ? "'\(result)'" : result
   }
 
-  private func createFileList(path: VirtualPath, contents: [VirtualPath]) throws {
+  private func createFileList(path: VirtualPath, contents: [VirtualPath.Handle]) throws {
     // FIXME: Need a way to support this for distributed build systems...
     if let absPath = path.absolutePath {
       try fileSystem.writeFileContents(absPath) { out in
@@ -142,13 +143,13 @@ public final class ArgsResolver {
       // and the frontend (llvm) only seems to support implicit block format.
       try fileSystem.writeFileContents(absPath) { out in
         for (input, map) in outputFileMap.entries {
-          out <<< quoteAndEscape(path: VirtualPath.lookup(input)) <<< ":"
+          out <<< quoteAndEscape(path: input) <<< ":"
           if map.isEmpty {
             out <<< " {}\n"
           } else {
             out <<< "\n"
             for (type, output) in map {
-              out <<< "  " <<< type.name <<< ": " <<< quoteAndEscape(path: VirtualPath.lookup(output)) <<< "\n"
+              out <<< "  " <<< type.name <<< ": " <<< quoteAndEscape(path: output) <<< "\n"
             }
           }
         }
@@ -156,7 +157,7 @@ public final class ArgsResolver {
     }
   }
 
-  private func quoteAndEscape(path: VirtualPath) -> String {
+  private func quoteAndEscape(path: VirtualPath.Handle) -> String {
     let inputNode = Node.scalar(Node.Scalar(try! unsafeResolve(path: path, quotePaths: false),
                                             Tag(.str), .doubleQuoted))
     // Width parameter of -1 sets preferred line-width to unlimited so that no extraneous

@@ -573,7 +573,7 @@ extension Driver {
       return Job(
         moduleName: moduleOutputInfo.name,
         kind: .versionRequest,
-        tool: .absolute(try toolchain.getToolPath(.swiftCompiler)),
+        tool: try toolchain.getToolPathHandle(.swiftCompiler),
         commandLine: [.flag("--version")],
         inputs: [],
         primaryInputs: [],
@@ -589,7 +589,7 @@ extension Driver {
       return Job(
         moduleName: moduleOutputInfo.name,
         kind: .help,
-        tool: .absolute(try toolchain.getToolPath(.swiftHelp)),
+        tool: try toolchain.getToolPathHandle(.swiftHelp),
         commandLine: commandLine,
         inputs: [],
         primaryInputs: [],

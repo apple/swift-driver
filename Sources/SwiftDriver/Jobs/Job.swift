@@ -43,23 +43,35 @@ public struct Job: Codable, Equatable, Hashable {
     case flag(String)
 
     /// Represents a virtual path on disk.
-    case path(VirtualPath)
+    case pathHandle(VirtualPath.Handle)
 
     /// Represents a response file path prefixed by '@'.
-    case responseFilePath(VirtualPath)
+    case responseFilePathHandle(VirtualPath.Handle)
 
     /// Represents a joined option+path combo.
-    case joinedOptionAndPath(String, VirtualPath)
+    case joinedOptionAndPathHandle(String, VirtualPath.Handle)
 
     /// Represents a list of arguments squashed together and passed as a single argument.
     case squashedArgumentList(option: String, args: [ArgTemplate])
+
+    public static func path(_ path: VirtualPath) -> ArgTemplate {
+      return .pathHandle(path.intern())
+    }
+
+    public static func responseFilePath(_ path: VirtualPath) -> ArgTemplate {
+      return .responseFilePathHandle(path.intern())
+    }
+
+    public static func joinedOptionAndPath(_ option: String, _ path: VirtualPath) -> ArgTemplate {
+      return .joinedOptionAndPathHandle(option, path.intern())
+    }
   }
 
   /// The Swift module this job involves.
   public var moduleName: String
 
   /// The tool to invoke.
-  public var tool: VirtualPath
+  public var tool: VirtualPath.Handle
 
   /// The command-line arguments of the job.
   public var commandLine: [ArgTemplate]
@@ -100,7 +112,7 @@ public struct Job: Codable, Equatable, Hashable {
   public init(
     moduleName: String,
     kind: Kind,
-    tool: VirtualPath,
+    tool: VirtualPath.Handle,
     commandLine: [ArgTemplate],
     displayInputs: [TypedVirtualPath]? = nil,
     inputs: [TypedVirtualPath],
@@ -278,13 +290,13 @@ extension Job.ArgTemplate: Codable {
     case let .flag(a1):
       var unkeyedContainer = container.nestedUnkeyedContainer(forKey: .flag)
       try unkeyedContainer.encode(a1)
-    case let .path(a1):
+    case let .pathHandle(a1):
       var unkeyedContainer = container.nestedUnkeyedContainer(forKey: .path)
       try unkeyedContainer.encode(a1)
-    case let .responseFilePath(a1):
+    case let .responseFilePathHandle(a1):
       var unkeyedContainer = container.nestedUnkeyedContainer(forKey: .responseFilePath)
       try unkeyedContainer.encode(a1)
-    case let .joinedOptionAndPath(option, path):
+    case let .joinedOptionAndPathHandle(option, path):
       var keyedContainer = container.nestedContainer(
         keyedBy: CodingKeys.JoinedOptionAndPathCodingKeys.self,
         forKey: .joinedOptionAndPath)
@@ -321,8 +333,8 @@ extension Job.ArgTemplate: Codable {
       let keyedValues = try values.nestedContainer(
         keyedBy: CodingKeys.JoinedOptionAndPathCodingKeys.self,
         forKey: .joinedOptionAndPath)
-      self = .joinedOptionAndPath(try keyedValues.decode(String.self, forKey: .option),
-                                  try keyedValues.decode(VirtualPath.self, forKey: .path))
+      self = .joinedOptionAndPathHandle(try keyedValues.decode(String.self, forKey: .option),
+                                        try keyedValues.decode(VirtualPath.Handle.self, forKey: .path))
     case .squashedArgumentList:
       let keyedValues = try values.nestedContainer(
         keyedBy: CodingKeys.SquashedArgumentListCodingKeys.self,

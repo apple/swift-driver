@@ -122,7 +122,7 @@ extension Driver {
       // primary file list
       commandLine.appendFlag(.primaryFilelist)
       let path = RelativePath(createTemporaryFileName(prefix: "primaryInputs"))
-      commandLine.appendPath(.fileList(path, .list(primaryInputs.map(\.file))))
+      commandLine.appendPath(.fileList(path, .list(primaryInputs.map(\.fileHandle))))
     }
 
     let isTopLevel = isTopLevelOutput(type: outputType)
@@ -297,7 +297,7 @@ extension Driver {
     if primaryOutputs.count > fileListThreshold {
       commandLine.appendFlag(.outputFilelist)
       let path = RelativePath(createTemporaryFileName(prefix: "outputs"))
-      commandLine.appendPath(.fileList(path, .list(primaryOutputs.map { $0.file })))
+      commandLine.appendPath(.fileList(path, .list(primaryOutputs.map { $0.fileHandle })))
     } else {
       for primaryOutput in primaryOutputs {
         commandLine.appendFlag(.o)
@@ -310,7 +310,7 @@ extension Driver {
       if primaryIndexUnitOutputs.count > fileListThreshold {
         commandLine.appendFlag(.indexUnitOutputPathFilelist)
         let path = RelativePath(createTemporaryFileName(prefix: "index-unit-outputs"))
-        commandLine.appendPath(.fileList(path, .list(primaryIndexUnitOutputs.map { $0.file })))
+        commandLine.appendPath(.fileList(path, .list(primaryIndexUnitOutputs.map { $0.fileHandle })))
       } else {
         for primaryIndexUnitOutput in primaryIndexUnitOutputs {
           commandLine.appendFlag(.indexUnitOutputPath)
@@ -366,7 +366,7 @@ extension Driver {
     return Job(
       moduleName: moduleOutputInfo.name,
       kind: .compile,
-      tool: .absolute(try toolchain.getToolPath(.swiftCompiler)),
+      tool: try toolchain.getToolPathHandle(.swiftCompiler),
       commandLine: commandLine,
       displayInputs: primaryInputs,
       inputs: inputs,

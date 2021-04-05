@@ -14,7 +14,7 @@ import Foundation
 
 public enum FileList: Hashable {
   /// File of file paths
-  case list([VirtualPath])
+  case list([VirtualPath.Handle])
   /// YAML OutputFileMap
   case outputFileMap(OutputFileMap)
 }
@@ -30,7 +30,7 @@ extension FileList: Codable {
     let key = try container.decode(Key.self)
     switch key {
     case .list:
-      let contents = try container.decode([VirtualPath].self)
+      let contents = try container.decode([VirtualPath.Handle].self)
       self = .list(contents)
     case .outputFileMap:
       let map = try container.decode(OutputFileMap.self)

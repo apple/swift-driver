@@ -29,7 +29,7 @@ extension Driver {
     return Job(
       moduleName: moduleOutputInfo.name,
       kind: .moduleWrap,
-      tool: .absolute(try toolchain.getToolPath(.swiftCompiler)),
+      tool: try toolchain.getToolPathHandle(.swiftCompiler),
       commandLine: commandLine,
       inputs: [moduleInput],
       primaryInputs: [],

@@ -23,7 +23,7 @@ extension Driver {
     return Job(
       moduleName: moduleOutputInfo.name,
       kind: .verifyDebugInfo,
-      tool: .absolute(try toolchain.getToolPath(.dwarfdump)),
+      tool: VirtualPath.absolute(try toolchain.getToolPath(.dwarfdump)).intern(),
       commandLine: commandLine,
       displayInputs: [],
       inputs: inputs,

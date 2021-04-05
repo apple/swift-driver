@@ -82,11 +82,11 @@ private func checkExplicitModuleBuildJobDependencies(job: Job,
         XCTAssert(job.commandLine.contains(explicitDepsFlag))
         let jsonDepsPathIndex = job.commandLine.firstIndex(of: explicitDepsFlag)
         let jsonDepsPathArg = job.commandLine[jsonDepsPathIndex! + 1]
-        guard case .path(let jsonDepsPath) = jsonDepsPathArg else {
+        guard case .pathHandle(let jsonDepsHandle) = jsonDepsPathArg else {
           XCTFail("No JSON dependency file path found.")
           return
         }
-        guard case let .temporaryWithKnownContents(_, contents) = jsonDepsPath else {
+        guard case let .temporaryWithKnownContents(_, contents) = VirtualPath.lookup(jsonDepsHandle) else {
           XCTFail("Unexpected path type")
           return
         }
@@ -103,12 +103,12 @@ private func checkExplicitModuleBuildJobDependencies(job: Job,
         XCTAssert(job.commandLine.contains(explicitDepsFlag))
         let jsonDepsPathIndex = job.commandLine.firstIndex(of: explicitDepsFlag)
         let jsonDepsPathArg = job.commandLine[jsonDepsPathIndex! + 1]
-        guard case .path(let jsonDepsPath) = jsonDepsPathArg else {
+        guard case .pathHandle(let jsonDepsHandle) = jsonDepsPathArg else {
           XCTFail("No JSON dependency file path found.")
           return
         }
         let contents =
-          try localFileSystem.readFileContents(jsonDepsPath.absolutePath!)
+          try localFileSystem.readFileContents(VirtualPath.lookup(jsonDepsHandle).absolutePath!)
         let dependencyInfoList = try JSONDecoder().decode(Array<SwiftModuleArtifactInfo>.self,
                                                       from: Data(contents.contents))
         let dependencyArtifacts =

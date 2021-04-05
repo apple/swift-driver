@@ -30,13 +30,13 @@ final class NonincrementalCompilationTests: XCTestCase {
                        Date(legacyDriverSecsAndNanos: [1570318779, 32358000]))
     try XCTAssertEqual(buildRecord.inputInfos,
                        [
-                        VirtualPath(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/file2.swift"):
+                        VirtualPath.intern(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/file2.swift"):
                           InputInfo(status: .needsCascadingBuild,
                                     previousModTime: Date(legacyDriverSecsAndNanos: [1570318778, 0])),
-                        VirtualPath(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/main.swift"):
+                        VirtualPath.intern(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/main.swift"):
                           InputInfo(status: .upToDate,
                                     previousModTime: Date(legacyDriverSecsAndNanos: [1570083660, 0])),
-                        VirtualPath(path: "/Volumes/gazorp.swift"):
+                        VirtualPath.intern(path: "/Volumes/gazorp.swift"):
                           InputInfo(status: .needsNonCascadingBuild,
                                     previousModTime:  Date(legacyDriverSecsAndNanos: [0, 0]))
                        ])
@@ -55,13 +55,13 @@ final class NonincrementalCompilationTests: XCTestCase {
                        Date(legacyDriverSecsAndNanos: [1570318779, 32358000]))
     try XCTAssertEqual(buildRecord.inputInfos,
                        [
-                        VirtualPath(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/file2.swift"):
+                        VirtualPath.intern(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/file2.swift"):
                           InputInfo(status: .needsCascadingBuild,
                                     previousModTime: Date(legacyDriverSecsAndNanos: [1570318778, 0])),
-                        VirtualPath(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/main.swift"):
+                        VirtualPath.intern(path: "/Volumes/AS/repos/swift-driver/sandbox/sandbox/sandbox/main.swift"):
                           InputInfo(status: .upToDate,
                                     previousModTime: Date(legacyDriverSecsAndNanos: [1570083660, 0])),
-                        VirtualPath(path: "/Volumes/gazorp.swift"):
+                        VirtualPath.intern(path: "/Volumes/gazorp.swift"):
                           InputInfo(status: .needsNonCascadingBuild,
                                     previousModTime:  Date(legacyDriverSecsAndNanos: [0, 0]))
                        ])
@@ -225,20 +225,20 @@ final class NonincrementalCompilationTests: XCTestCase {
     XCTAssert(isCloseEnough(buildRecord.buildTime.legacyDriverSecsAndNanos,
                             [1570318779, 32357931]))
 
-    XCTAssertEqual(try! buildRecord.inputInfos[VirtualPath(path: file2 )]!.status,
+    XCTAssertEqual(try! buildRecord.inputInfos[VirtualPath.intern(path: file2 )]!.status,
                    .needsCascadingBuild)
     XCTAssert(try! isCloseEnough(
-                XCTUnwrap(buildRecord.inputInfos[VirtualPath(path: file2 )])
+                XCTUnwrap(buildRecord.inputInfos[VirtualPath.intern(path: file2 )])
                   .previousModTime.legacyDriverSecsAndNanos,
                 [1570318778, 0]))
-    XCTAssertEqual(try! XCTUnwrap(buildRecord.inputInfos[VirtualPath(path: gazorp)]).status,
+    XCTAssertEqual(try! XCTUnwrap(buildRecord.inputInfos[VirtualPath.intern(path: gazorp)]).status,
                    .needsNonCascadingBuild)
-    XCTAssertEqual(try! XCTUnwrap(buildRecord.inputInfos[VirtualPath(path: gazorp)])
+    XCTAssertEqual(try! XCTUnwrap(buildRecord.inputInfos[VirtualPath.intern(path: gazorp)])
                     .previousModTime.legacyDriverSecsAndNanos,
                    [0, 0])
-    XCTAssertEqual(try! XCTUnwrap(buildRecord.inputInfos[VirtualPath(path: main  )]).status,
+    XCTAssertEqual(try! XCTUnwrap(buildRecord.inputInfos[VirtualPath.intern(path: main  )]).status,
                    .upToDate)
-    XCTAssert(try! isCloseEnough(XCTUnwrap(buildRecord.inputInfos[VirtualPath(path: main  )])
+    XCTAssert(try! isCloseEnough(XCTUnwrap(buildRecord.inputInfos[VirtualPath.intern(path: main  )])
                                    .previousModTime.legacyDriverSecsAndNanos,
                                  [1570083660, 0]))
 

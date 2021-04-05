@@ -485,7 +485,7 @@ public struct Driver {
     if shouldUseInputFileList {
       let swiftInputs = inputFiles.filter(\.type.isPartOfSwiftCompilation)
       let path = RelativePath(createTemporaryFileName(prefix: "sources"))
-      self.allSourcesFileList = .fileList(path, .list(swiftInputs.map(\.file)))
+      self.allSourcesFileList = .fileList(path, .list(swiftInputs.map(\.fileHandle)))
     } else {
       self.allSourcesFileList = nil
     }
@@ -1040,7 +1040,7 @@ extension Driver {
 
   private func printBindings(_ job: Job) {
     stdoutStream <<< #"# ""# <<< targetTriple.triple
-    stdoutStream <<< #"" - ""# <<< job.tool.basename
+    stdoutStream <<< #"" - ""# <<< VirtualPath.lookup(job.tool).basename
     stdoutStream <<< #"", inputs: ["#
     stdoutStream <<< job.displayInputs.map { "\"" + $0.file.name + "\"" }.joined(separator: ", ")
 

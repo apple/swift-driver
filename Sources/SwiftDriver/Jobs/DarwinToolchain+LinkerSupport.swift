@@ -252,16 +252,16 @@ extension DarwinToolchain {
     if shouldUseInputFileList {
       commandLine.appendFlag(.filelist)
       let path = RelativePath(createTemporaryFileName(prefix: "inputs", suffix: "LinkFileList"))
-      var inputPaths = [VirtualPath]()
+      var inputPaths = [VirtualPath.Handle]()
       var inputModules = [VirtualPath]()
       for input in inputs {
         if input.type == .swiftModule && linkerOutputType != .staticLibrary {
-          inputPaths.append(input.file)
+          inputPaths.append(input.fileHandle)
           inputModules.append(input.file)
         } else if input.type == .object {
-          inputPaths.append(input.file)
+          inputPaths.append(input.fileHandle)
         } else if input.type == .llvmBitcode {
-          inputPaths.append(input.file)
+          inputPaths.append(input.fileHandle)
         }
       }
       commandLine.appendPath(.fileList(path, .list(inputPaths)))

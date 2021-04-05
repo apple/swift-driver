@@ -101,7 +101,7 @@ extension Array where Element == Job.ArgTemplate {
 
     case .joined:
       if option.attributes.contains(.argumentIsPath) {
-        append(.joinedOptionAndPath(option.spelling, try VirtualPath(path: argument.asSingle)))
+        append(.joinedOptionAndPathHandle(option.spelling, try VirtualPath.intern(path: argument.asSingle)))
       } else {
         appendFlag(option.spelling + argument.asSingle)
       }
@@ -171,12 +171,12 @@ extension Array where Element == Job.ArgTemplate {
       switch $0 {
         case .flag(let string):
           return string.spm_shellEscaped()
-        case .path(let path):
-          return path.name.spm_shellEscaped()
-      case .responseFilePath(let path):
-        return "@\(path.name.spm_shellEscaped())"
-      case let .joinedOptionAndPath(option, path):
-        return option.spm_shellEscaped() + path.name.spm_shellEscaped()
+        case .pathHandle(let path):
+          return VirtualPath.lookup(path).name.spm_shellEscaped()
+      case .responseFilePathHandle(let path):
+        return "@\(VirtualPath.lookup(path).name.spm_shellEscaped())"
+      case let .joinedOptionAndPathHandle(option, path):
+        return option.spm_shellEscaped() + VirtualPath.lookup(path).name.spm_shellEscaped()
       case let .squashedArgumentList(option, args):
         return (option + args.joinedUnresolvedArguments).spm_shellEscaped()
       }

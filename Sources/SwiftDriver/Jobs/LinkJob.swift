@@ -68,7 +68,7 @@ extension Driver {
     return Job(
       moduleName: moduleOutputInfo.name,
       kind: .link,
-      tool: .absolute(toolPath),
+      tool: VirtualPath.absolute(toolPath).intern(),
       commandLine: commandLine,
       displayInputs: inputs,
       inputs: inputs,

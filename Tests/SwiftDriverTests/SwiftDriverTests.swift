@@ -494,7 +494,7 @@ final class SwiftDriverTests: XCTestCase {
     XCTAssertEqual(plannedJobs[0].outputs.first!.file, VirtualPath.temporary(RelativePath("foo.o")))
     XCTAssertEqual(plannedJobs[1].outputs.count, 1)
     XCTAssertEqual(plannedJobs[1].outputs.first!.file, VirtualPath.temporary(RelativePath("bar.o")))
-    XCTAssertTrue(plannedJobs[2].tool.name.contains(driver1.targetTriple.isDarwin ? "ld" : "clang"))
+    XCTAssertTrue(VirtualPath.lookup(plannedJobs[2].tool).name.contains(driver1.targetTriple.isDarwin ? "ld" : "clang"))
     XCTAssertEqual(plannedJobs[2].outputs.count, 1)
     XCTAssertEqual(plannedJobs[2].outputs.first!.file, VirtualPath.relative(RelativePath("Test")))
 
@@ -631,7 +631,11 @@ final class SwiftDriverTests: XCTestCase {
     func getFileListElements(for filelistOpt: String, job: Job) -> [VirtualPath] {
       let optIndex = job.commandLine.firstIndex(of: .flag(filelistOpt))!
       let value = job.commandLine[job.commandLine.index(after: optIndex)]
-      guard case let .path(.fileList(_, valueFileList)) = value else {
+      guard case let .pathHandle(handle) = value else {
+        XCTFail("Argument wasn't a filelist")
+        return []
+      }
+      guard case let .fileList(_, valueFileList) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return []
       }
@@ -639,7 +643,7 @@ final class SwiftDriverTests: XCTestCase {
         XCTFail("FileList wasn't List")
         return []
       }
-      return inputs
+      return inputs.map(VirtualPath.lookup)
     }
 
     try withTemporaryFile { file in
@@ -1190,14 +1194,14 @@ final class SwiftDriverTests: XCTestCase {
       let plannedJobs1 = try driver1.planBuild()
       XCTAssertFalse(plannedJobs1.contains(where: { $0.kind == .autolinkExtract }))
       let linkJob1 = plannedJobs1.first(where: { $0.kind == .link })
-      XCTAssertTrue(linkJob1?.tool.name.contains("ld"))
+      XCTAssertTrue(try VirtualPath.lookup(XCTUnwrap(linkJob1).tool).name.contains("ld"))
       XCTAssertTrue(linkJob1?.commandLine.contains(.flag("-lto_library")))
 
       var driver2 = try Driver(args: commonArgs + ["-emit-executable", "-target", "x86_64-unknown-linux", "-lto=llvm-thin"], env: env)
       let plannedJobs2 = try driver2.planBuild()
       XCTAssertFalse(plannedJobs2.contains(where: { $0.kind == .autolinkExtract }))
       let linkJob2 = plannedJobs2.first(where: { $0.kind == .link })
-      XCTAssertTrue(linkJob2?.tool.name.contains("clang"))
+      XCTAssertTrue(try VirtualPath.lookup(XCTUnwrap(linkJob2).tool).name.contains("clang"))
       XCTAssertTrue(linkJob2?.commandLine.contains(.flag("-flto=thin")))
 
       var driver3 = try Driver(args: commonArgs + ["-emit-executable", "-target", "x86_64-unknown-linux", "-lto=llvm-full"], env: env)
@@ -1208,7 +1212,7 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertTrue(compileJob3.outputs.contains { $0.file.basename.hasSuffix(".bc") })
 
       let linkJob3 = try XCTUnwrap(plannedJobs3.first(where: { $0.kind == .link }))
-      XCTAssertTrue(linkJob3.tool.name.contains("clang"))
+      XCTAssertTrue(VirtualPath.lookup(linkJob3.tool).name.contains("clang"))
       XCTAssertTrue(linkJob3.commandLine.contains(.flag("-flto=full")))
     }
 
@@ -1562,8 +1566,8 @@ final class SwiftDriverTests: XCTestCase {
       let linkJob = plannedJobs[2]
       let linkCmd = linkJob.commandLine
       XCTAssertTrue(linkCmd.contains {
-        if case .path(let path) = $0 {
-          return path.name.contains("darwin/libclang_rt.asan_osx_dynamic.dylib")
+        if case .pathHandle(let path) = $0 {
+          return VirtualPath.lookup(path).name.contains("darwin/libclang_rt.asan_osx_dynamic.dylib")
         }
         return false
       })
@@ -1583,8 +1587,8 @@ final class SwiftDriverTests: XCTestCase {
       let linkJob = plannedJobs[2]
       let linkCmd = linkJob.commandLine
       XCTAssertTrue(linkCmd.contains {
-        if case .path(let path) = $0 {
-          return path.name.contains("darwin/libclang_rt.tsan_osx_dynamic.dylib")
+        if case .pathHandle(let path) = $0 {
+          return VirtualPath.lookup(path).name.contains("darwin/libclang_rt.tsan_osx_dynamic.dylib")
         }
         return false
       })
@@ -1604,8 +1608,8 @@ final class SwiftDriverTests: XCTestCase {
       let linkJob = plannedJobs[2]
       let linkCmd = linkJob.commandLine
       XCTAssertTrue(linkCmd.contains {
-        if case .path(let path) = $0 {
-          return path.name.contains("darwin/libclang_rt.ubsan_osx_dynamic.dylib")
+        if case .pathHandle(let path) = $0 {
+          return VirtualPath.lookup(path).name.contains("darwin/libclang_rt.ubsan_osx_dynamic.dylib")
         }
         return false
       })
@@ -1690,7 +1694,7 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertEqual(plannedJobs[1].outputs.first!.file, VirtualPath.temporary(RelativePath("foo3.o")))
       XCTAssertEqual(plannedJobs[2].outputs.count, 3)
       XCTAssertEqual(plannedJobs[2].outputs.first!.file, VirtualPath.temporary(RelativePath("foo5.o")))
-      XCTAssertTrue(plannedJobs[3].tool.name.contains(driver1.targetTriple.isDarwin ? "ld" : "clang"))
+      XCTAssertTrue(VirtualPath.lookup(plannedJobs[3].tool).name.contains(driver1.targetTriple.isDarwin ? "ld" : "clang"))
       XCTAssertEqual(plannedJobs[3].outputs.count, 1)
       XCTAssertEqual(plannedJobs[3].outputs.first!.file, VirtualPath.relative(RelativePath("Test")))
     }
@@ -1743,8 +1747,8 @@ final class SwiftDriverTests: XCTestCase {
       if pair.element == .flag(suppleArg) {
         let filemap = args[pair.offset + 1]
         switch filemap {
-        case .path(let p):
-          fileMapPath = p
+        case .pathHandle(let p):
+          fileMapPath = VirtualPath.lookup(p)
         default:
           break
         }
@@ -1918,7 +1922,7 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertEqual(plannedJobs[1].outputs[3].file, .temporary(RelativePath("bar.d")))
       XCTAssert(plannedJobs[1].commandLine.contains(.flag("-import-objc-header")))
 
-      XCTAssertTrue(plannedJobs[2].tool.name.contains("swift"))
+      XCTAssertTrue(VirtualPath.lookup(plannedJobs[2].tool).name.contains("swift"))
       XCTAssertEqual(plannedJobs[2].outputs.count, 3)
       XCTAssertEqual(plannedJobs[2].outputs[0].file, .relative(RelativePath("Test.swiftmodule")))
       XCTAssertEqual(plannedJobs[2].outputs[1].file, .relative(RelativePath("Test.swiftdoc")))
@@ -1930,7 +1934,7 @@ final class SwiftDriverTests: XCTestCase {
       var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module-path", "/foo/bar/Test.swiftmodule" ])
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 3)
-      XCTAssertTrue(plannedJobs[2].tool.name.contains("swift"))
+      XCTAssertTrue(VirtualPath.lookup(plannedJobs[2].tool).name.contains("swift"))
       XCTAssertEqual(plannedJobs[2].outputs.count, 3)
       XCTAssertEqual(plannedJobs[2].outputs[0].file, .absolute(AbsolutePath("/foo/bar/Test.swiftmodule")))
       XCTAssertEqual(plannedJobs[2].outputs[1].file, .absolute(AbsolutePath("/foo/bar/Test.swiftdoc")))
@@ -1942,7 +1946,7 @@ final class SwiftDriverTests: XCTestCase {
       var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module-path", "Test.swiftmodule" ])
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 3)
-      XCTAssertTrue(plannedJobs[2].tool.name.contains("swift"))
+      XCTAssertTrue(VirtualPath.lookup(plannedJobs[2].tool).name.contains("swift"))
       XCTAssertEqual(plannedJobs[2].outputs.count, 3)
       XCTAssertEqual(plannedJobs[2].outputs[0].file, .relative(RelativePath("Test.swiftmodule")))
       XCTAssertEqual(plannedJobs[2].outputs[1].file, .relative(RelativePath("Test.swiftdoc")))
@@ -1954,7 +1958,7 @@ final class SwiftDriverTests: XCTestCase {
       var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module"])
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 3)
-      XCTAssertTrue(plannedJobs[2].tool.name.contains("swift"))
+      XCTAssertTrue(VirtualPath.lookup(plannedJobs[2].tool).name.contains("swift"))
       XCTAssertEqual(plannedJobs[2].outputs.count, 3)
       XCTAssertEqual(plannedJobs[2].outputs[0].file, .relative(RelativePath("Test.swiftmodule")))
       XCTAssertEqual(plannedJobs[2].outputs[1].file, .relative(RelativePath("Test.swiftdoc")))
@@ -1980,7 +1984,7 @@ final class SwiftDriverTests: XCTestCase {
       var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module-path", "/foo/bar/Test.swiftmodule", "-experimental-emit-module-separately", "-emit-library", "-target", "x86_64-apple-macosx10.15"])
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 4)
-      XCTAssertTrue(plannedJobs[0].tool.name.contains("swift"))
+      XCTAssertTrue(VirtualPath.lookup(plannedJobs[0].tool).name.contains("swift"))
       XCTAssertTrue(plannedJobs[0].commandLine.contains(.flag("-parse-as-library")))
       XCTAssertEqual(plannedJobs[0].outputs.count, 3)
       XCTAssertEqual(plannedJobs[0].outputs[0].file, .absolute(AbsolutePath("/foo/bar/Test.swiftmodule")))
@@ -1994,7 +1998,7 @@ final class SwiftDriverTests: XCTestCase {
       var driver = try Driver(args: ["swiftc", "foo.swift", "bar.swift", "-module-name", "Test", "-emit-module-path", "/foo/bar/Test.swiftmodule", "-experimental-emit-module-separately"])
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 1)
-      XCTAssertTrue(plannedJobs[0].tool.name.contains("swift"))
+      XCTAssertTrue(VirtualPath.lookup(plannedJobs[0].tool).name.contains("swift"))
       XCTAssertEqual(plannedJobs[0].outputs.count, 3)
       XCTAssertEqual(plannedJobs[0].outputs[0].file, .absolute(AbsolutePath("/foo/bar/Test.swiftmodule")))
       XCTAssertEqual(plannedJobs[0].outputs[1].file, .absolute(AbsolutePath("/foo/bar/Test.swiftdoc")))
@@ -2073,7 +2077,7 @@ final class SwiftDriverTests: XCTestCase {
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 1)
       let replJob = plannedJobs.first!
-      XCTAssertTrue(replJob.tool.name.contains("lldb"))
+      XCTAssertTrue(VirtualPath.lookup(replJob.tool).name.contains("lldb"))
       XCTAssertTrue(replJob.requiresInPlaceExecution)
       XCTAssert(replJob.commandLine.contains(where: { isExpectedLLDBREPLFlag($0) }))
     }
@@ -2083,7 +2087,7 @@ final class SwiftDriverTests: XCTestCase {
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 1)
       let replJob = plannedJobs.first!
-      XCTAssertTrue(replJob.tool.name.contains("lldb"))
+      XCTAssertTrue(VirtualPath.lookup(replJob.tool).name.contains("lldb"))
       XCTAssertTrue(replJob.requiresInPlaceExecution)
       XCTAssert(replJob.commandLine.contains(where: { isExpectedLLDBREPLFlag($0) }))
     }
@@ -2095,7 +2099,7 @@ final class SwiftDriverTests: XCTestCase {
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 1)
       let replJob = plannedJobs.first!
-      XCTAssertTrue(replJob.tool.name.contains("lldb"))
+      XCTAssertTrue(VirtualPath.lookup(replJob.tool).name.contains("lldb"))
       XCTAssertTrue(replJob.requiresInPlaceExecution)
       XCTAssert(replJob.commandLine.contains(where: { isExpectedLLDBREPLFlag($0) }))
     }
@@ -2519,7 +2523,7 @@ final class SwiftDriverTests: XCTestCase {
                                      "foo.swift"])
       let frontendJobs = try driver.planBuild()
       XCTAssertTrue(frontendJobs.count == 2)
-      XCTAssertTrue(frontendJobs[1].tool.absolutePath!.pathString == ld.pathString)
+      XCTAssertTrue(VirtualPath.lookup(frontendJobs[1].tool).absolutePath!.pathString == ld.pathString)
     }
   }
 
@@ -3703,8 +3707,8 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertEqual(plannedJobs[0].outputs[1].type, .pch)
       XCTAssert(plannedJobs[0].commandLine.contains(.flag("-serialize-diagnostics-path")))
       XCTAssert(plannedJobs[0].commandLine.contains {
-        guard case .path(let path) = $0 else { return false }
-        return path.name.range(of: #"/pch/TestInputHeader-.*.dia"#, options: .regularExpression) != nil
+        guard case .pathHandle(let path) = $0 else { return false }
+        return VirtualPath.lookup(path).name.range(of: #"/pch/TestInputHeader-.*.dia"#, options: .regularExpression) != nil
       })
       XCTAssert(plannedJobs[0].commandLine.contains(.flag("-frontend")))
       XCTAssert(plannedJobs[0].commandLine.contains(.flag("-emit-pch")))
@@ -4213,7 +4217,7 @@ final class SwiftDriverTests: XCTestCase {
       env: env)
     let jobs = try driver.planBuild()
     XCTAssert(jobs.count == 1)
-    XCTAssertEqual(jobs.first!.tool.name, "/usr/bin/nonexistent-swift-help")
+    XCTAssertEqual(VirtualPath.lookup(jobs.first!.tool).name, "/usr/bin/nonexistent-swift-help")
   }
   
   func testSourceInfoFileEmitOption() throws {
@@ -4352,7 +4356,11 @@ final class SwiftDriverTests: XCTestCase {
       let jobA = plannedJobs[0]
       let flagA = jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
       let fileListArgumentA = jobA.commandLine[jobA.commandLine.index(after: flagA)]
-      guard case let .path(.fileList(_, fileListA)) = fileListArgumentA else {
+      guard case let .pathHandle(handleA) = fileListArgumentA else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, fileListA) = VirtualPath.lookup(handleA) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4368,7 +4376,11 @@ final class SwiftDriverTests: XCTestCase {
       let jobB = plannedJobs[1]
       let flagB = jobB.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
       let fileListArgumentB = jobB.commandLine[jobB.commandLine.index(after: flagB)]
-      guard case let .path(.fileList(_, fileListB)) = fileListArgumentB else {
+      guard case let .pathHandle(handleB) = fileListArgumentB else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, fileListB) = VirtualPath.lookup(handleB) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4384,7 +4396,11 @@ final class SwiftDriverTests: XCTestCase {
       let jobC = plannedJobs[2]
       let flagC = jobC.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
       let fileListArgumentC = jobC.commandLine[jobC.commandLine.index(after: flagC)]
-      guard case let .path(.fileList(_, fileListC)) = fileListArgumentC else {
+      guard case let .pathHandle(handleC) = fileListArgumentC else {
+        XCTFail("Argument wasn't a handle")
+        return
+      }
+      guard case let .fileList(_, fileListC) = VirtualPath.lookup(handleC) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4404,7 +4420,11 @@ final class SwiftDriverTests: XCTestCase {
       let job = plannedJobs[0]
       let inputsFlag = job.commandLine.firstIndex(of: .flag("-filelist"))!
       let inputFileListArgument = job.commandLine[job.commandLine.index(after: inputsFlag)]
-      guard case let .path(.fileList(_, inputFileList)) = inputFileListArgument else {
+      guard case let .pathHandle(handle) = inputFileListArgument else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, inputFileList) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4412,11 +4432,15 @@ final class SwiftDriverTests: XCTestCase {
         XCTFail("FileList wasn't List")
         return
       }
-      XCTAssertEqual(inputs, [.relative(RelativePath("a.swift")), .relative(RelativePath("b.swift")), .relative(RelativePath("c.swift"))])
+      XCTAssertEqual(inputs.map(VirtualPath.lookup), [.relative(RelativePath("a.swift")), .relative(RelativePath("b.swift")), .relative(RelativePath("c.swift"))])
 
       let outputsFlag = job.commandLine.firstIndex(of: .flag("-output-filelist"))!
       let outputFileListArgument = job.commandLine[job.commandLine.index(after: outputsFlag)]
-      guard case let .path(.fileList(_, outputFileList)) = outputFileListArgument else {
+      guard case let .pathHandle(handle) = outputFileListArgument else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, outputFileList) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4424,7 +4448,7 @@ final class SwiftDriverTests: XCTestCase {
         XCTFail("FileList wasn't List")
         return
       }
-      XCTAssertEqual(outputs, [.relative(RelativePath("main.o"))])
+      XCTAssertEqual(outputs.map(VirtualPath.lookup), [.relative(RelativePath("main.o"))])
     }
 
     do {
@@ -4433,7 +4457,11 @@ final class SwiftDriverTests: XCTestCase {
       let job = plannedJobs[0]
       let outputsFlag = job.commandLine.firstIndex(of: .flag("-output-filelist"))!
       let outputFileListArgument = job.commandLine[job.commandLine.index(after: outputsFlag)]
-      guard case let .path(.fileList(_, outputFileList)) = outputFileListArgument else {
+      guard case let .pathHandle(handle) = outputFileListArgument else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, outputFileList) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4441,7 +4469,7 @@ final class SwiftDriverTests: XCTestCase {
         XCTFail("FileList wasn't List")
         return
       }
-      XCTAssertEqual(outputs, [.relative(RelativePath("a.o")), .relative(RelativePath("b.o")), .relative(RelativePath("c.o"))])
+      XCTAssertEqual(outputs.map(VirtualPath.lookup), [.relative(RelativePath("a.o")), .relative(RelativePath("b.o")), .relative(RelativePath("c.o"))])
     }
 
     do {
@@ -4450,7 +4478,11 @@ final class SwiftDriverTests: XCTestCase {
       let job = plannedJobs[0]
       let outputsFlag = job.commandLine.firstIndex(of: .flag("-output-filelist"))!
       let outputFileListArgument = job.commandLine[job.commandLine.index(after: outputsFlag)]
-      guard case let .path(.fileList(_, outputFileList)) = outputFileListArgument else {
+      guard case let .pathHandle(handle) = outputFileListArgument else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, outputFileList) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4458,7 +4490,7 @@ final class SwiftDriverTests: XCTestCase {
         XCTFail("FileList wasn't List")
         return
       }
-      XCTAssertEqual(outputs, [.temporary(RelativePath("a.bc")), .temporary(RelativePath("b.bc")), .temporary(RelativePath("c.bc"))])
+      XCTAssertEqual(outputs.map(VirtualPath.lookup), [.temporary(RelativePath("a.bc")), .temporary(RelativePath("b.bc")), .temporary(RelativePath("c.bc"))])
     }
 
     do {
@@ -4467,7 +4499,11 @@ final class SwiftDriverTests: XCTestCase {
       let job = plannedJobs[3]
       let inputsFlag = job.commandLine.firstIndex(of: .flag("-filelist"))!
       let inputFileListArgument = job.commandLine[job.commandLine.index(after: inputsFlag)]
-      guard case let .path(.fileList(_, inputFileList)) = inputFileListArgument else {
+      guard case let .pathHandle(handle) = inputFileListArgument else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, inputFileList) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4475,7 +4511,7 @@ final class SwiftDriverTests: XCTestCase {
         XCTFail("FileList wasn't List")
         return
       }
-      XCTAssertEqual(inputs, [.temporary(RelativePath("a.o")), .temporary(RelativePath("b.o")), .temporary(RelativePath("c.o"))])
+      XCTAssertEqual(inputs.map(VirtualPath.lookup), [.temporary(RelativePath("a.o")), .temporary(RelativePath("b.o")), .temporary(RelativePath("c.o"))])
     }
 
     do {
@@ -4484,7 +4520,11 @@ final class SwiftDriverTests: XCTestCase {
       let job = plannedJobs[1]
       let inputsFlag = job.commandLine.firstIndex(of: .flag("-filelist"))!
       let inputFileListArgument = job.commandLine[job.commandLine.index(after: inputsFlag)]
-      guard case let .path(.fileList(_, inputFileList)) = inputFileListArgument else {
+      guard case let .pathHandle(handle) = inputFileListArgument else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, inputFileList) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4492,7 +4532,7 @@ final class SwiftDriverTests: XCTestCase {
         XCTFail("FileList wasn't List")
         return
       }
-      XCTAssertEqual(inputs, [.temporary(RelativePath("a.o")), .temporary(RelativePath("b.o")), .temporary(RelativePath("c.o"))])
+      XCTAssertEqual(inputs.map(VirtualPath.lookup), [.temporary(RelativePath("a.o")), .temporary(RelativePath("b.o")), .temporary(RelativePath("c.o"))])
     }
 
     do {
@@ -4502,7 +4542,11 @@ final class SwiftDriverTests: XCTestCase {
       let jobA = plannedJobs[0]
       let flagA = jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
       let fileListArgumentA = jobA.commandLine[jobA.commandLine.index(after: flagA)]
-      guard case let .path(.fileList(_, fileListA)) = fileListArgumentA else {
+      guard case let .pathHandle(handle) = fileListArgumentA else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, fileListA) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4515,7 +4559,11 @@ final class SwiftDriverTests: XCTestCase {
       let jobB = plannedJobs[1]
       let flagB = jobB.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
       let fileListArgumentB = jobB.commandLine[jobB.commandLine.index(after: flagB)]
-      guard case let .path(.fileList(_, fileListB)) = fileListArgumentB else {
+      guard case let .pathHandle(handle) = fileListArgumentB else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, fileListB) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4533,7 +4581,11 @@ final class SwiftDriverTests: XCTestCase {
       let jobA = plannedJobs[0]
       let flagA = jobA.commandLine.firstIndex(of: .flag("-supplementary-output-file-map"))!
       let fileListArgumentA = jobA.commandLine[jobA.commandLine.index(after: flagA)]
-      guard case let .path(.fileList(_, fileListA)) = fileListArgumentA else {
+      guard case let .pathHandle(handle) = fileListArgumentA else {
+        XCTFail("Argument wasn't a path")
+        return
+      }
+      guard case let .fileList(_, fileListA) = VirtualPath.lookup(handle) else {
         XCTFail("Argument wasn't a filelist")
         return
       }
@@ -4596,9 +4648,9 @@ private extension Array where Element == Job.ArgTemplate {
   func containsPathWithBasename(_ basename: String) -> Bool {
     contains {
       switch $0 {
-      case let .path(path):
-        return path.basename == basename
-      case .flag, .responseFilePath, .joinedOptionAndPath, .squashedArgumentList:
+      case let .pathHandle(path):
+        return VirtualPath.lookup(path).basename == basename
+      case .flag, .responseFilePathHandle, .joinedOptionAndPathHandle, .squashedArgumentList:
         return false
       }
     }

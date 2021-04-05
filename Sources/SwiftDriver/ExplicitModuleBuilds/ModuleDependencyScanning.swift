@@ -29,7 +29,7 @@ internal extension Driver {
     // Construct the scanning job.
     return Job(moduleName: moduleOutputInfo.name,
                kind: .scanDependencies,
-               tool: VirtualPath.absolute(try toolchain.getToolPath(.swiftCompiler)),
+               tool: try toolchain.getToolPathHandle(.swiftCompiler),
                commandLine: commandLine,
                displayInputs: inputs,
                inputs: inputs,
@@ -266,7 +266,7 @@ internal extension Driver {
     // Construct the scanning job.
     return Job(moduleName: moduleOutputInfo.name,
                kind: .scanDependencies,
-               tool: VirtualPath.absolute(try toolchain.getToolPath(.swiftCompiler)),
+               tool: try toolchain.getToolPathHandle(.swiftCompiler),
                commandLine: commandLine,
                displayInputs: inputs,
                inputs: inputs,

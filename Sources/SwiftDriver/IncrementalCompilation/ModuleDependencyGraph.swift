@@ -108,7 +108,7 @@ extension ModuleDependencyGraph {
     input: TypedVirtualPath
   ) -> TransitivelyInvalidatedInputSet? {
     // do not try to read swiftdeps of a new input
-    if info.sourceFiles.isANewInput(input.file) {
+    if info.sourceFiles.isANewInput(input.fileHandle) {
       return TransitivelyInvalidatedInputSet()
     }
     return collectInputsRequiringCompilationAfterProcessing(

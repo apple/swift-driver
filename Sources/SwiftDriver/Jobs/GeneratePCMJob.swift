@@ -55,7 +55,7 @@ extension Driver {
     return Job(
       moduleName: moduleOutputInfo.name,
       kind: .generatePCM,
-      tool: .absolute(try toolchain.getToolPath(.swiftCompiler)),
+      tool: try toolchain.getToolPathHandle(.swiftCompiler),
       commandLine: commandLine,
       displayInputs: [],
       inputs: inputs,

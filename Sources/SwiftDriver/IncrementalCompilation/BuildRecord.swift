@@ -21,12 +21,12 @@ public struct BuildRecord {
   public let argsHash: String?
   public let buildTime: Date
   /// The date is the modification time of the main input file the last time the driver ran
-  public let inputInfos: [VirtualPath: InputInfo]
+  public let inputInfos: [VirtualPath.Handle: InputInfo]
 
   public init(argsHash: String?,
               swiftVersion: String,
               buildTime: Date,
-              inputInfos: [VirtualPath: InputInfo]) {
+              inputInfos: [VirtualPath.Handle: InputInfo]) {
     self.argsHash = argsHash
     self.swiftVersion = swiftVersion
     self.buildTime = buildTime
@@ -42,7 +42,7 @@ public struct BuildRecord {
     var serializedName: String { rawValue }
   }
 
-  var allInputs: Set<VirtualPath> {
+  var allInputs: Set<VirtualPath.Handle> {
     Set(inputInfos.map { $0.key })
   }
 }
@@ -60,7 +60,7 @@ public extension BuildRecord {
     var swiftVersion: String?
     // Legacy driver does not disable incremental if no buildTime field.
     var buildTime: Date = .distantPast
-    var inputInfos: [VirtualPath: InputInfo]?
+    var inputInfos: [VirtualPath.Handle: InputInfo]?
     for (key, value) in sections {
       guard let k = key.string else {
         failedToReadOutOfDateMap(nil)
@@ -140,16 +140,16 @@ public extension BuildRecord {
   private static func decodeInputInfos(
     _ node: Yams.Node,
     _ failedToReadOutOfDateMap: (String) -> Void
-  ) -> [VirtualPath: InputInfo]? {
+  ) -> [VirtualPath.Handle: InputInfo]? {
     guard let map = node.mapping else {
       failedToReadOutOfDateMap(
         "Malformed value for key '\(SectionName.inputInfos.serializedName)'")
       return nil
     }
-    var infos = [VirtualPath: InputInfo]()
+  var infos = [VirtualPath.Handle: InputInfo]()
     for (keyNode, valueNode) in map {
       guard let pathString = keyNode.string,
-            let path = try? VirtualPath(path: pathString)
+            let path = try? VirtualPath.intern(path: pathString)
       else {
         failedToReadOutOfDateMap("no input entry in build record")
         return nil
@@ -188,10 +188,10 @@ extension BuildRecord {
         entry.job.inputsGeneratingCode.map { ($0, entry.result) }
     })
     let inputInfosArray = compilationInputModificationDates
-      .map { input, modDate -> (VirtualPath, InputInfo) in
-        let status = InputInfo.Status(  wasSkipped: skippedInputs?.contains(input),
-                                        jobResult: jobResultsByInput[input])
-        return (input.file, InputInfo(status: status, previousModTime: modDate))
+      .map { input, modDate -> (VirtualPath.Handle, InputInfo) in
+        let status = InputInfo.Status(wasSkipped: skippedInputs?.contains(input),
+                                      jobResult: jobResultsByInput[input])
+        return (input.fileHandle, InputInfo(status: status, previousModTime: modDate))
       }
 
     self.init(
@@ -208,7 +208,7 @@ extension BuildRecord {
   ) -> String? {
       let pathsAndInfos = inputInfos.map {
         input, inputInfo -> (String, InputInfo) in
-        return (input.name, inputInfo)
+        return (VirtualPath.lookup(input).name, inputInfo)
       }
       let inputInfosNode = Yams.Node(
         pathsAndInfos

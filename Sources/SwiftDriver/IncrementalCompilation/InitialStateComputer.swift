@@ -84,7 +84,7 @@ extension IncrementalCompilationState {
           reporter.report(
             "Incremental compilation has been disabled, " +
               " because  the following inputs were used in the previous compilation but not in this one: "
-              + sourceFiles.disappeared.map {$0.basename} .joined(separator: ", "))
+              + sourceFiles.disappeared.map {VirtualPath.lookup($0).basename} .joined(separator: ", "))
         }
         return nil
       }
@@ -349,7 +349,7 @@ extension IncrementalCompilationState.InitialStateComputer {
       let input = group.primaryInput
       let modDate = buildRecordInfo.compilationInputModificationDates[input]
         ?? Date.distantFuture
-      let inputInfo = outOfDateBuildRecord.inputInfos[input.file]
+      let inputInfo = outOfDateBuildRecord.inputInfos[input.fileHandle]
       let previousCompilationStatus = inputInfo?.status ?? .newlyAdded
       let previousModTime = inputInfo?.previousModTime
 

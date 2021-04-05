@@ -27,7 +27,7 @@ extension Driver {
     if shouldUseInputFileList {
       commandLine.appendFlag(.filelist)
       let path = RelativePath(createTemporaryFileName(prefix: "inputs"))
-      commandLine.appendPath(.fileList(path, .list(inputsFromOutputs.map { $0.file })))
+      commandLine.appendPath(.fileList(path, .list(inputsFromOutputs.map { $0.fileHandle })))
       inputs.append(contentsOf: inputsFromOutputs)
       
       for input in providedInputs {
@@ -77,7 +77,7 @@ extension Driver {
     return Job(
       moduleName: moduleOutputInfo.name,
       kind: .mergeModule,
-      tool: .absolute(try toolchain.getToolPath(.swiftCompiler)),
+      tool: try toolchain.getToolPathHandle(.swiftCompiler),
       commandLine: commandLine,
       inputs: inputs,
       primaryInputs: [],

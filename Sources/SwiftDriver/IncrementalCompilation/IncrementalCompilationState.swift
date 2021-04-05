@@ -461,12 +461,12 @@ extension OutputFileMap {
 // MARK: SourceFiles
 @_spi(Testing) public struct SourceFiles {
   let currentInOrder: [TypedVirtualPath]
-  private let previous: Set<VirtualPath>
-  let disappeared: [VirtualPath]
+  private let previous: Set<VirtualPath.Handle>
+  let disappeared: [VirtualPath.Handle]
 
   init(inputFiles: [TypedVirtualPath], buildRecord: BuildRecord?) {
     self.currentInOrder = inputFiles.filter {$0.type == .swift}
-    let currentSet = Set(currentInOrder.map {$0.file} )
+    let currentSet = Set(currentInOrder.map {$0.fileHandle} )
     self.previous = buildRecord.map {
       Set($0.inputInfos.keys)
     } ?? Set()
@@ -474,7 +474,7 @@ extension OutputFileMap {
     self.disappeared = previous.filter {!currentSet.contains($0)}
   }
 
-  func isANewInput(_ file: VirtualPath) -> Bool {
+  func isANewInput(_ file: VirtualPath.Handle) -> Bool {
     !previous.contains(file)
   }
 }

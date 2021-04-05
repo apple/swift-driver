@@ -37,7 +37,7 @@ import TSCBasic
     if let count = kindCounter[job.kind] {
       label += " \(count)"
     }
-    label += " (\(findToolName(job.tool)))"
+    label += " (\(findToolName(VirtualPath.lookup(job.tool))))"
     kindCounter[job.kind, default: 0] += 1
     return label
   }

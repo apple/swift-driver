@@ -17,7 +17,7 @@ import Darwin
 #endif
 
 /// A virtual path.
-public enum VirtualPath: Hashable {
+public enum VirtualPath {
   private static var pathCache = PathCache()
 
   /// A relative path that has not been resolved based on the current working
@@ -200,7 +200,9 @@ public enum VirtualPath: Hashable {
       return self
     }
   }
+}
 
+extension VirtualPath: Equatable {
   public static func == (lhs: VirtualPath, rhs: VirtualPath) -> Bool {
     switch (lhs, rhs) {
     case (.standardOutput, .standardOutput), (.standardInput, .standardInput):

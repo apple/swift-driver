@@ -196,6 +196,10 @@ extension Toolchain {
     inputs: inout [TypedVirtualPath],
     frontendTargetInfo: FrontendTargetInfo
   ) throws {}
+
+  public func getToolPathHandle(_ tool: Tool) throws -> VirtualPath.Handle {
+    return try VirtualPath.absolute(self.getToolPath(tool)).intern()
+  }
 }
 
 @_spi(Testing) public enum ToolchainError: Swift.Error {
