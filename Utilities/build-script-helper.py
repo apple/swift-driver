@@ -27,8 +27,6 @@ def error(message):
 driver_toolchain_tools = ['swift', 'swift-frontend', 'clang', 'swift-help',
                           'swift-autolink-extract', 'lldb']
 
-executables_to_install = ['swift-driver', 'swift-help', 'swift-build-sdk-interfaces']
-
 def mkdir_p(path):
     """Create the given directory, if it does not exist."""
     try:
@@ -213,7 +211,7 @@ def handle_invocation(args):
 # TODO: Unify CMake-based installation flow used on Darwin with this
 def non_darwin_install(swiftpm_bin_path, toolchain, verbose):
   toolchain_bin = os.path.join(toolchain, 'bin')
-  for exe in executables_to_install:
+  for exe in ['swift-driver', 'swift-help']:
     install_binary(exe, swiftpm_bin_path, toolchain_bin, verbose)
 
 def install(args, build_dir, targets):
@@ -252,7 +250,7 @@ def install_swiftdriver(args, build_dir, prefix, targets) :
 # Install universal binaries for swift-driver and swift-help into the toolchain bin
 # directory
 def install_executables(args, build_dir, universal_bin_dir, toolchain_bin_dir, targets):
-  for exe in executables_to_install:
+  for exe in ['swift-driver', 'swift-help']:
     # Fixup rpaths
     for target in targets:
       exe_bin_path = os.path.join(build_dir, target,
