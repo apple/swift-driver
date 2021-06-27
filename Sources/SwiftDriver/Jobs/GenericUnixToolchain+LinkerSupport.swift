@@ -124,6 +124,10 @@ extension GenericUnixToolchain {
       let staticExecutable = parsedOptions.hasFlag(positive: .staticExecutable,
                                                    negative: .noStaticExecutable,
                                                   default: false)
+      let toolchainStdlibRpath = parsedOptions
+                                 .hasFlag(positive: .toolchainStdlibRpath,
+                                          negative: .noToolchainStdlibRpath,
+                                          default: true)
       let hasRuntimeArgs = !(staticStdlib || staticExecutable)
 
       let runtimePaths = try runtimeLibraryPaths(
@@ -133,7 +137,8 @@ extension GenericUnixToolchain {
         isShared: hasRuntimeArgs
       )
 
-      if hasRuntimeArgs && targetTriple.environment != .android {
+      if hasRuntimeArgs && targetTriple.environment != .android &&
+          toolchainStdlibRpath {
         // FIXME: We probably shouldn't be adding an rpath here unless we know
         //        ahead of time the standard library won't be copied.
         for path in runtimePaths {
