@@ -123,7 +123,7 @@ final class ParsableMessageTests: XCTestCase {
       try withTemporaryDirectory { path in
         try withHijackedBufferedErrorStream(in: path) { errorBuffer in
           let resolver = try ArgsResolver(fileSystem: localFileSystem)
-          var driver = try Driver(args: ["swiftc", "-emit-module", "-o", "test.swiftmodule",
+          var driver = try Driver(args: ["swiftc", "-o", "test.o",
                                          "main.swift", "test1.swift", "test2.swift",
                                          "-enable-batch-mode", "-driver-batch-count", "1",
                                          "-working-directory", "/WorkDir"])
@@ -201,7 +201,7 @@ final class ParsableMessageTests: XCTestCase {
         var toolDelegate: ToolExecutionDelegate?
         try withHijackedBufferedErrorStream(in: path) { errorBuffer in
           let resolver = try ArgsResolver(fileSystem: localFileSystem)
-          var driver = try Driver(args: ["swiftc", "-emit-module", "-o", "test.swiftmodule",
+          var driver = try Driver(args: ["swiftc", "-o", "test.o",
                                          "main.swift", "test1.swift", "test2.swift",
                                          "-enable-batch-mode", "-driver-batch-count", "1",
                                          "-working-directory", "/WorkDir"])
@@ -278,7 +278,7 @@ final class ParsableMessageTests: XCTestCase {
         var toolDelegate: ToolExecutionDelegate?
         try withHijackedBufferedErrorStream(in: path) { errorBuffer in
           let resolver = try ArgsResolver(fileSystem: localFileSystem)
-          var driver = try Driver(args: ["swiftc", "-emit-module", "-o", "test.swiftmodule",
+          var driver = try Driver(args: ["swiftc", "-o", "test.o",
                                          "main.swift", "test1.swift", "test2.swift",
                                          "-enable-batch-mode", "-driver-batch-count", "1",
                                          "-working-directory", "/WorkDir"])

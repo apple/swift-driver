@@ -141,8 +141,6 @@ extension Driver {
 
     try addPrecompileModuleDependenciesJobs(addJob: addJobBeforeCompiles)
     try addPrecompileBridgingHeaderJob(addJob: addJobBeforeCompiles)
-    try addEmitModuleJob(addJobBeforeCompiles: addJobBeforeCompiles,
-                         addJobAfterCompiles: addJobAfterCompiles)
     let linkerInputs = try addJobsFeedingLinker(
       addJobBeforeCompiles: addJobBeforeCompiles,
       addCompileJobGroup: addCompileJobGroup,
@@ -178,12 +176,13 @@ extension Driver {
     )
   }
 
-  private mutating func addEmitModuleJob(addJobBeforeCompiles: (Job) -> Void, addJobAfterCompiles: (Job) -> Void) throws {
+  private mutating func addEmitModuleJob(addJobBeforeCompiles: (Job) -> Void) throws -> Job? {
     if shouldCreateEmitModuleJob {
       let emitJob = try emitModuleJob()
       addJobBeforeCompiles(emitJob)
-      try addVerifyJobs(emitModuleJob: emitJob, addJob: addJobAfterCompiles)
+      return emitJob
     }
+    return nil
   }
 
   private mutating func addJobsFeedingLinker(
@@ -218,10 +217,32 @@ extension Driver {
       }
     }
 
+    // Ensure that only one job emits the module files and insert a verify swiftinterface job
+    var jobCreatingSwiftModule: Job? = nil
+    func addPostModuleFilesJobs(_ emitModuleJob: Job) throws {
+      // We should only emit module files from one job
+      assert(jobCreatingSwiftModule == nil)
+      jobCreatingSwiftModule = emitModuleJob
+
+      try addVerifyJobs(emitModuleJob: emitModuleJob, addJob: addJobAfterCompiles)
+    }
+
+    // Whole-module
     if let compileJob = try addSingleCompileJobs(addJob: addJobBeforeCompiles,
                              addJobOutputs: addJobOutputs,
                              emitModuleTrace: loadedModuleTracePath != nil) {
-      try addVerifyJobs(emitModuleJob: compileJob, addJob: addJobAfterCompiles)
+      try addPostModuleFilesJobs(compileJob)
+    }
+
+    // Emit-module-separately
+    if let emitModuleJob = try addEmitModuleJob(addJobBeforeCompiles: addJobBeforeCompiles) {
+      try addPostModuleFilesJobs(emitModuleJob)
+
+      try addWrapJobOrMergeOutputs(
+        mergeJob: emitModuleJob,
+        debugInfo: debugInfo,
+        addJob: addJobAfterCompiles,
+        addLinkerInput: addLinkerInput)
     }
 
     try addJobsForPrimaryInputs(
@@ -234,11 +255,13 @@ extension Driver {
                               addLinkerInput: addLinkerInput,
                               addJob: addJobAfterCompiles)
 
+    // Merge-module
     if let mergeJob = try mergeModuleJob(
         moduleInputs: moduleInputs,
         moduleInputsFromJobOutputs: moduleInputsFromJobOutputs) {
       addJobAfterCompiles(mergeJob)
-      try addVerifyJobs(emitModuleJob: mergeJob, addJob: addJobAfterCompiles)
+      try addPostModuleFilesJobs(mergeJob)
+
       try addWrapJobOrMergeOutputs(
         mergeJob: mergeJob,
         debugInfo: debugInfo,
@@ -393,7 +416,8 @@ extension Driver {
   ) throws -> Job? {
     guard moduleOutputInfo.output != nil,
           !(moduleInputs.isEmpty && moduleInputsFromJobOutputs.isEmpty),
-          compilerMode.usesPrimaryFileInputs
+          compilerMode.usesPrimaryFileInputs,
+          !shouldCreateEmitModuleJob
     else { return nil }
     return try mergeModuleJob(inputs: moduleInputs, inputsFromOutputs: moduleInputsFromJobOutputs)
   }
