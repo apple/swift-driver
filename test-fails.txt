@@ -1,0 +1,102 @@
+Audit of Failing Driver Integration Tests (Specific error reasons may be out of date, but which tests failed should be accurate to commit date)
+
+validation-test/Driver:
+  Swift(macosx-x86_64) :: Driver/Dependencies/rdar23148987.swift
+    Required changes to test for spaces and json ordering. There is warning and skipped jobs aren't being skipped.
+  Swift(macosx-x86_64) :: Driver/Dependencies/rdar25405605.swift
+    Required changes to test for spaces and json ordering. Still failing.
+  Swift(macosx-x86_64) :: Driver/batch_mode_size_limit.swift
+    -enable-only-one-dependency-file, Feature not brought to swift-driver on purpose: https://github.com/apple/swift-driver/pull/74
+    
+test/Driver:
+  Swift(macosx-x86_64) :: Driver/filelists.swift
+    ValueError: '-filelist' is not in list
+    
+  Swift(macosx-x86_64) :: Driver/bad_exec.swift
+    Different error message
+    Looking for: `unable to execute command`
+    Found: `error: could not find executable for '/always/searching/never/finding'`
+    
+  Swift(macosx-x86_64) :: Driver/vfs.swift
+    C++ driver tests checks that inputs exist, that's missing in swift-driver
+    Missing error: no such file or directory: 'random.swift'
+
+  Swift(macosx-x86_64) :: Driver/bindings.swift
+    Missing .swiftdeps
+
+  Swift(macosx-x86_64) :: Driver/parseable_output.swift
+  Swift(macosx-x86_64) :: Driver/parseable_output_unicode.swift
+    JSON formatting - Not simple fix, it's full JSON blobs being compared. Best option is probably parsing them in python or `REQUIRES: cplusplus_driver`.
+    
+  Swift(macosx-x86_64) :: Driver/multi-threaded.swift
+    Output file map isn't being respected
+
+  Swift(macosx-x86_64) :: Driver/emit-dependencies.swift
+  Swift(macosx-x86_64) :: Driver/emit-module-summary.swift
+    Exit Code non-zero (no output)
+
+  Swift(macosx-x86_64) :: Driver/driver-time-compilation.swift
+    No output - Implementing would require rebuilding llvm::Timer
+
+  Swift(macosx-x86_64) :: Driver/static-archive.swift
+  Swift(macosx-x86_64) :: Driver/link-time-opt.swift
+  Swift(macosx-x86_64) :: Driver/verbose.swift
+  Swift(macosx-x86_64) :: Driver/profiling.swift
+  Swift(macosx-x86_64) :: Driver/sanitizers.swift
+  Swift(macosx-x86_64) :: Driver/windows-libc-options.swift
+  Swift(macosx-x86_64) :: Driver/sanitize_scudo.swift
+  Swift(macosx-x86_64) :: Driver/sdk.swift
+    Windows
+
+  Swift(macosx-x86_64) :: Driver/merge-module.swift
+  Swift(macosx-x86_64) :: Driver/bridging-pch.swift
+    Temporary file name postfix (-######). swift-driver doesn't do this, c++ driver does, functionality comes from llvm.
+
+  Swift(macosx-x86_64) :: Driver/batch_mode_dependencies_make_wrong_order.swift
+  Swift(macosx-x86_64) :: Driver/advanced_output_file_map.swift
+    Unable to read file map
+
+  Swift(macosx-x86_64) :: Driver/options-repl.swift
+    Expecting an error about no input files, got error saying to use lldb repl
+
+  Swift(macosx-x86_64) :: Driver/options-repl-darwin.swift
+    Expecting integrated repl
+  
+  Swift(macosx-x86_64) :: Driver/sdk-apple.swift
+  Swift(macosx-x86_64) :: Driver/working-directory.swift
+  Swift(macosx-x86_64) :: Driver/options.swift
+    Error about repl integrated repl being removed
+
+  Swift(macosx-x86_64) :: Driver/batch_mode_parseable_output-fine.swift
+  Swift(macosx-x86_64) :: Driver/batch_mode_parseable_output_cancellation.swift
+  Swift(macosx-x86_64) :: Driver/batch_mode_bridging_pch.swift
+    Crash: Multiple jobs producing same output file
+  
+  Swift(macosx-x86_64) :: Driver/temp-files.swift
+    swift-driver has no -save-temps support, and if an environment variable like `TMP` is set, swift-driver places temporary files in a subdirectory instead of immediately inside the specified one
+
+  Swift(macosx-x86_64) :: Driver/batch_mode.swift
+    Linking failed (`-driver-skip-execution should prevent it from attempting the link in the first place, but isn't implemented yet`)
+
+  Swift(macosx-x86_64) :: Driver/autolink-force-load-no-comdat.swift
+    Different error than expected
+
+  Swift(macosx-x86_64) :: Driver/embed-bitcode.swift
+    Different job order
+
+  Swift(macosx-x86_64) :: Driver/driver-use-frontend.swift
+    swift-driver checks that frontend exists, c++ driver does not
+
+  Swift(macosx-x86_64) :: Driver/options-interpreter.swift
+    Input validation order difference. swift-driver does SDKROOT validation first, c++ driver does objc runtime library validation first.
+    swift-driver needs sdk root early because it uses it to get target info.
+
+  Swift(macosx-x86_64) :: Driver/pipe_round_robin.swift.gyb
+    name 'NumDriverPipeReads' is not defined (This test depends on the driver's performance counters, which aren't implemented yet)
+
+  Swift(macosx-x86_64) :: Driver/response-file.swift
+    Temporary directory additional level, `TMPDIR` vs `TMPDIR/TemporaryDirectory.#####/`
+  
+  Swift(macosx-x86_64) :: Driver/sanitize_recover.swift
+    Missing: unsupported argument 'foo' to option '-sanitize-recover='
+    Fixed by, but error message was changed: https://github.com/apple/swift-driver/pull/645
