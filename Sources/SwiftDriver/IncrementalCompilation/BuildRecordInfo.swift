@@ -74,12 +74,14 @@ import SwiftOptions
     fileSystem: FileSystem,
     moduleOutputInfo: ModuleOutputInfo,
     outputFileMap: OutputFileMap?,
+    incremental: Bool,
     parsedOptions: ParsedOptions,
     recordedInputModificationDates: [TypedVirtualPath: Date]
   ) {
     // Cannot write a buildRecord without a path.
     guard let buildRecordPath = Self.computeBuildRecordPath(
             outputFileMap: outputFileMap,
+            incremental: incremental,
             compilerOutputType: compilerOutputType,
             workingDirectory: workingDirectory,
             diagnosticEngine: diagnosticEngine)
@@ -124,6 +126,7 @@ import SwiftOptions
   /// Determine the input and output path for the build record
   private static func computeBuildRecordPath(
     outputFileMap: OutputFileMap?,
+    incremental: Bool,
     compilerOutputType: FileType?,
     workingDirectory: AbsolutePath?,
     diagnosticEngine: DiagnosticsEngine
@@ -136,7 +139,9 @@ import SwiftOptions
     guard let partialBuildRecordPath =
             ofm.existingOutputForSingleInput(outputType: .swiftDeps)
     else {
-      diagnosticEngine.emit(.warning_incremental_requires_build_record_entry)
+      if incremental {
+        diagnosticEngine.emit(.warning_incremental_requires_build_record_entry)
+      }
       return nil
     }
     return workingDirectory
