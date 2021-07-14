@@ -109,6 +109,9 @@ def get_swiftpm_options(args):
         '-Xlinker', '-rpath', '-Xlinker', '$ORIGIN/../lib/swift/linux',
       ]
 
+  if args.action == 'install':
+    swiftpm_args += ['-Xswiftc', '-no-toolchain-stdlib-rpath']
+
   return swiftpm_args
 
 def install_binary(file, source_dir, install_dir, verbose):
