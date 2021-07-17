@@ -405,7 +405,14 @@ extension Driver {
        parsedOptions.hasArgument(.enableLibraryEvolution),
        parsedOptions.hasFlag(positive: .verifyEmittedModuleInterface,
                              negative: .noVerifyEmittedModuleInterface,
-                             default: false)
+                             default: true),
+
+      // Don't verify by default modules emitted from a merge-module job
+      // as it's more likely to be invalid
+      shouldCreateEmitModuleJob || compilerMode == .singleCompile ||
+        parsedOptions.hasFlag(positive: .verifyEmittedModuleInterface,
+                              negative: .noVerifyEmittedModuleInterface,
+                              default: false)
     else { return }
 
     func addVerifyJob(forPrivate: Bool) throws {
