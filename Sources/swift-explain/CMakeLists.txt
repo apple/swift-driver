@@ -6,11 +6,12 @@
 # See http://swift.org/LICENSE.txt for license information
 # See http://swift.org/CONTRIBUTORS.txt for Swift project authors
 
-add_subdirectory(CSwiftScan)
-add_subdirectory(SwiftOptions)
-add_subdirectory(SwiftDriver)
-add_subdirectory(SwiftDriverExecution)
-add_subdirectory(swift-build-sdk-interfaces)
-add_subdirectory(swift-driver)
-add_subdirectory(swift-help)
-add_subdirectory(swift-explain)
+add_executable(swift-explain
+  main.swift)
+target_link_libraries(swift-explain PUBLIC
+  SwiftOptions
+  ArgumentParser
+  TSCBasic)
+
+install(TARGETS swift-explain
+  DESTINATION bin)
