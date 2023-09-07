@@ -14,6 +14,7 @@ import protocol TSCBasic.DiagnosticData
 
 public enum OptionParseError : Error, Equatable, DiagnosticData {
   case unknownOption(index: Int, argument: String)
+  case driverUnsupportedFrontendOption(index: Int, argument: String)
   case missingArgument(index: Int, argument: String)
   case unsupportedOption(index: Int, argument: String, option: Option, currentDriverKind: DriverKind)
 
@@ -21,6 +22,8 @@ public enum OptionParseError : Error, Equatable, DiagnosticData {
     switch self {
     case let .unknownOption(index: _, argument: arg):
       return "unknown argument: '\(arg)'"
+    case let .driverUnsupportedFrontendOption(index: _, argument: arg):
+      return "Frontend argument passed to the driver: '\(arg)'. Use '-Xfrontend \(arg)' instead"
     case let .missingArgument(index: _, argument: arg):
       return "missing argument value for '\(arg)'"
     case let .unsupportedOption(index: _, argument: arg, option: option, currentDriverKind: driverKind):
@@ -40,7 +43,7 @@ extension OptionTable {
                     for driverKind: DriverKind, delayThrows: Bool = false) throws -> ParsedOptions {
     var trie = PrefixTrie<Option>()
     // Add all options, ignoring the .noDriver ones
-    for opt in options where !opt.attributes.contains(.noDriver) {
+    for opt in options {
       trie[opt.spelling] = opt
     }
 
@@ -86,6 +89,15 @@ extension OptionTable {
           continue
         } else {
           throw OptionParseError.unknownOption(index: index - 1, argument: argument)
+        }
+      }
+
+      guard !option.attributes.contains(.noDriver) else {
+        if delayThrows {
+          parsedOptions.addUnknownFlag(index: index - 1, argument: argument)
+          continue
+        } else {
+          throw OptionParseError.driverUnsupportedFrontendOption(index: index - 1, argument: argument)
         }
       }
 

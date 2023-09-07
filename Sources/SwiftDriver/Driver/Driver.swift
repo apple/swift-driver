@@ -782,7 +782,7 @@ public struct Driver {
       Driver.isOptionFound($0, allOpts: supportedFrontendFlagsLocal)
     }
     self.savedUnknownDriverFlagsForSwiftFrontend.forEach {
-      diagnosticsEngine.emit(.warning("save unknown driver flag \($0) as additional swift-frontend flag"),
+      diagnosticsEngine.emit(.warning("Passing compiler-frontend-only flag '\($0)' as additional 'swift-frontend' flag (Use '-Xfrontend' to avoid warning)"),
                              location: nil)
     }
     self.supportedFrontendFeatures = try Self.computeSupportedCompilerFeatures(of: self.toolchain, env: env)

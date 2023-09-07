@@ -6248,6 +6248,14 @@ final class SwiftDriverTests: XCTestCase {
     }
   }
 
+  func testFrontendOnlyOptionWarning() throws {
+    do {
+      var driver = try Driver(args: ["swiftc", "-enable-cross-import-overlays", "foo.swift"])
+      XCTAssertEqual(driver.diagnosticEngine.diagnostics.first?.message.text,
+      "Passing compiler-frontend-only flag '-enable-cross-import-overlays' as additional 'swift-frontend' flag (Use '-Xfrontend' to avoid warning)")
+    }
+  }
+
   func testVFSOverlay() throws {
     do {
       var driver = try Driver(args: ["swiftc", "-c", "-vfsoverlay", "overlay.yaml", "foo.swift"])
