@@ -2528,10 +2528,19 @@ extension Driver {
         moduleName = "__bad__"
       }
     }
-
-    if !moduleName.sd_isSwiftIdentifier {
-      fallbackOrDiagnose(.error_bad_module_name(moduleName: moduleName, explicitModuleName: parsedOptions.contains(.moduleName)))
-    } else if moduleName == "Swift" && !parsedOptions.contains(.parseStdlib) {
+		
+    do {
+      try moduleName.sd_validateSwiftIdentifier()
+    }
+    catch let validationFailure as InvalidSwiftIdentifierError {
+      fallbackOrDiagnose(.error_bad_module_name(
+        moduleName: moduleName,
+        explicitModuleName: parsedOptions.contains(.moduleName),
+        validationFailureReason: validationFailure.reason
+      ))
+    }
+	  
+    if moduleName == "Swift" && !parsedOptions.contains(.parseStdlib) {
       fallbackOrDiagnose(.error_stdlib_module_name(moduleName: moduleName, explicitModuleName: parsedOptions.contains(.moduleName)))
     }
 

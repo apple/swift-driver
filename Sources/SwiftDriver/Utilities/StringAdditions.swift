@@ -9,17 +9,24 @@
 // See https://swift.org/CONTRIBUTORS.txt for the list of Swift project authors
 //
 //===----------------------------------------------------------------------===//
+
+public struct InvalidSwiftIdentifierError: Error {
+  let reason: String
+}
+
 extension String {
   /// Whether this string is a Swift identifier.
   public var sd_isSwiftIdentifier: Bool {
-    guard let start = unicodeScalars.first else {
-      return false
-    }
-
-    let continuation = unicodeScalars.dropFirst()
-
-    return start.isValidSwiftIdentifierStart &&
-           continuation.allSatisfy { $0.isValidSwiftIdentifierContinuation }
+		do {
+			try sd_validateSwiftIdentifier()
+			return true
+		} catch {
+			return false
+		}
+  }
+	
+  public func sd_validateSwiftIdentifier() throws {
+    // TODO: implement me
   }
 }
 

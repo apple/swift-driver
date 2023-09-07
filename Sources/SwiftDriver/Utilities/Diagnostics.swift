@@ -81,16 +81,17 @@ extension Diagnostic.Message {
 
   static func error_bad_module_name(
     moduleName: String,
-    explicitModuleName: Bool
+    explicitModuleName: Bool,
+		validationFailureReason reason: String
   ) -> Diagnostic.Message {
     let suffix: String
     if explicitModuleName {
       suffix = ""
     } else {
-      suffix = "; use -module-name flag to specify an alternate name"
+      suffix = " Use -module-name flag to specify an alternate name"
     }
 
-    return .error("module name \"\(moduleName)\" is not a valid identifier\(suffix)")
+    return .error("module name \"\(moduleName)\" is not a valid Swift identifier, because \(reason).\(suffix)")
   }
 
   static func error_stdlib_module_name(
