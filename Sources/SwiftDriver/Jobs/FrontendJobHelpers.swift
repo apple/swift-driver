@@ -436,6 +436,11 @@ extension Driver {
       commandLine.appendFlag(.pluginPath)
       commandLine.appendPath(pluginPathRoot.localPluginPath)
     }
+
+    if let passPluginPath = parsedOptions.getLastArgument(.loadPassPluginEQ),
+        isFrontendArgSupported(.loadPassPluginEQ) {
+      commandLine.appendFlag("-load-pass-plugin=\(passPluginPath.asSingle)")
+    }
   }
 
   func addBridgingHeaderPCHCacheKeyArguments(commandLine: inout [Job.ArgTemplate],
