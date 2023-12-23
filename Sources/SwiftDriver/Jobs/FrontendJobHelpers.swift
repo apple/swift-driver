@@ -135,7 +135,7 @@ extension Driver {
       throw ErrorDiagnostics.emitted
     }
 
-    if embeddedEnabled &&
+    if embeddedEnabled && compilerOutputType?.requiresSILGen == true &&
        (!parsedOptions.hasArgument(.wmo) || !parsedOptions.hasArgument(.wholeModuleOptimization)) {
       diagnosticEngine.emit(.error_need_wmo_embedded)
       throw ErrorDiagnostics.emitted

@@ -6504,6 +6504,13 @@ final class SwiftDriverTests: XCTestCase {
       XCTAssertTrue(diags.diagnostics.first!.message.text == Diagnostic.Message.error_need_wmo_embedded.text)
     } catch _ { }
     do {
+      // Indexing embedded Swift code should not require WMO
+      let diags = DiagnosticsEngine()
+      var driver = try Driver(args: ["swiftc", "-target", "arm64-apple-macosx10.13",  "test.swift", "-index-file", "-index-file-path", "test.swift", "-enable-experimental-feature", "Embedded", "-parse-as-library", "-o", "a.out", "-module-name", "main"], diagnosticsEngine: diags)
+      _ = try driver.planBuild()
+      XCTAssertEqual(diags.diagnostics.count, 0)
+    }
+    do {
       let diags = DiagnosticsEngine()
       var driver = try Driver(args: ["swiftc", "-target", "arm64-apple-macosx10.13",  "test.swift", "-enable-experimental-feature", "Embedded", "-parse-as-library", "-wmo", "-o", "a.out", "-module-name", "main", "-enable-objc-interop"], diagnosticsEngine: diags)
       _ = try driver.planBuild()
