@@ -7609,6 +7609,21 @@ final class SwiftDriverTests: XCTestCase {
       }
     }
   }
+
+  func testFrontendLoadPassPlugin() throws {
+#if os(Windows)
+    throw XCTSkip("'-load-pass-plugin' is not available on Windows.")
+#else
+    var driver = try Driver(args: ["swiftc", "foo.swift", "-load-pass-plugin=/path/to/plugin"])
+    guard driver.isFrontendArgSupported(.loadPassPluginEQ) else {
+      throw XCTSkip("Skipping: compiler does not support '-load-pass-plugin'.")
+    }
+    let plannedJobs = try driver.planBuild()
+    XCTAssertEqual(plannedJobs[0].kind, .compile)
+    XCTAssertTrue(plannedJobs[0].tool.name.hasSuffix("swift-frontend"))
+    XCTAssertTrue(plannedJobs[0].commandLine.contains(.flag("-load-pass-plugin=/path/to/plugin")))
+#endif
+  }
 }
 
 func assertString(
