@@ -141,7 +141,6 @@ if ProcessInfo.processInfo.environment["SWIFT_DRIVER_LLBUILD_FWK"] == nil {
         ]
         package.targets.first(where: { $0.name == "SwiftDriverExecution" })!.dependencies += [
             .product(name: "llbuildSwift", package: "swift-llbuild"),
-            .product(name: "llbuild", package: "swift-llbuild"),
         ]
     } else {
         // In Swift CI, use a local path to llbuild to interoperate with tools
@@ -151,7 +150,6 @@ if ProcessInfo.processInfo.environment["SWIFT_DRIVER_LLBUILD_FWK"] == nil {
         ]
         package.targets.first(where: { $0.name == "SwiftDriverExecution" })!.dependencies += [
             .product(name: "llbuildSwift", package: "llbuild"),
-            .product(name: "llbuild", package: "llbuild"),
         ]
     }
 }
