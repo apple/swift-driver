@@ -16,29 +16,6 @@ import func TSCBasic.lookupExecutablePath
 import struct TSCBasic.AbsolutePath
 
 extension GenericUnixToolchain {
-  private func defaultLinker(for targetTriple: Triple) -> String? {
-    if targetTriple.os == .openbsd || targetTriple.os == .freeBSD ||
-         targetTriple.environment == .android ||
-         targetTriple.isFullyStaticLinux {
-      return "lld"
-    }
-
-    switch targetTriple.arch {
-    case .arm, .aarch64, .armeb, .thumb, .thumbeb:
-      // BFD linker has issues wrt relocation of the protocol conformance
-      // section on these targets, it also generates COPY relocations for
-      // final executables, as such, unless specified, we default to gold
-      // linker.
-      return "gold"
-    case .x86, .x86_64, .ppc64, .ppc64le, .systemz:
-      // BFD linker has issues wrt relocations against protected symbols.
-      return "gold"
-    default:
-      // Otherwise, use the default BFD linker.
-      return ""
-    }
-  }
-
   private func majorArchitectureName(for triple: Triple) -> String {
     // The concept of a "major" arch name only applies to Linux triples
     guard triple.os == .linux else { return triple.archName }
@@ -71,35 +48,11 @@ extension GenericUnixToolchain {
       commandLine.appendFlag("-shared")
       fallthrough
     case .executable:
-        // Select the linker to use.
-      var linker: String?
-      if let arg = parsedOptions.getLastArgument(.useLd) {
-        linker = arg.asSingle
+      // Select the linker to use.
+      if let arg = parsedOptions.getLastArgument(.useLd)?.asSingle {
+        commandLine.appendFlag("--fuse-ld=\(arg)")
       } else if lto != nil {
-        linker = "lld"
-      } else {
-        linker = defaultLinker(for: targetTriple)
-      }
-
-      if let linker = linker {
-        #if os(Haiku)
-        // For now, passing -fuse-ld on Haiku doesn't work as swiftc doesn't
-        // recognise it. Passing -use-ld= as the argument works fine.
-        commandLine.appendFlag("-use-ld=\(linker)")
-        #else
-        commandLine.appendFlag("-fuse-ld=\(linker)")
-        #endif
-        // Starting with lld 13, Swift stopped working with the lld
-        // --gc-sections implementation for ELF, unless -z nostart-stop-gc is
-        // also passed to lld:
-        //
-        // https://reviews.llvm.org/D96914
-        if linker == "lld" || linker.hasSuffix("ld.lld") {
-          commandLine.appendFlag(.Xlinker)
-          commandLine.appendFlag("-z")
-          commandLine.appendFlag(.Xlinker)
-          commandLine.appendFlag("nostart-stop-gc")
-        }
+        commandLine.appendFlag("--fuse-ld=lld")
       }
 
       if let arg = parsedOptions.getLastArgument(.ldPath)?.asSingle {

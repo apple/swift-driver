@@ -177,8 +177,8 @@ extension DarwinToolchain {
       }
     }
 
-    if let arg = parsedOptions.getLastArgument(.useLd) {
-      commandLine.appendFlag("-fuse-ld=\(arg.asSingle)")
+    if let arg = parsedOptions.getLastArgument(.useLd)?.asSingle {
+      commandLine.appendFlag("-fuse-ld=\(arg)")
     }
 
     if let arg = parsedOptions.getLastArgument(.ldPath)?.asSingle {

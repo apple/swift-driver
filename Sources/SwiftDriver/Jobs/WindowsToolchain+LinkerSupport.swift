@@ -99,8 +99,8 @@ extension WindowsToolchain {
     }
 
     // Select the linker to use.
-    if let arg = parsedOptions.getLastArgument(.useLd) {
-      commandLine.appendFlag("-fuse-ld=\(arg.asSingle)")
+    if let arg = parsedOptions.getLastArgument(.useLd)?.asSingle {
+      commandLine.appendFlag("-fuse-ld=\(arg)")
     } else if lto != nil {
       commandLine.appendFlag("-fuse-ld=lld")
     }
