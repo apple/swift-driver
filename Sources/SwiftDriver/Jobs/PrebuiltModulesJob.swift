@@ -142,6 +142,30 @@ func printJobInfo(_ job: Job, _ start: Bool, _ verbose: Bool) {
   }
 }
 
+class JSONOutputDelegate: Encodable {
+  enum SDKFailureKind: String, Encodable {
+    case BrokenTextualInterface
+  }
+  struct SDKFailure: Encodable {
+    let inputPath: String
+    let kind: SDKFailureKind
+  }
+  var allFailures = [SDKFailure]()
+  func jobFinished(_ job: Job, _ result: ProcessResult) {
+    switch result.exitStatus {
+    case .terminated(code: let code):
+      if code == 0 {
+        break
+      } else {
+        allFailures.append(SDKFailure(inputPath: getLastInputPath(job).pathString,
+                                      kind: .BrokenTextualInterface))
+      }
+    default:
+      break
+    }
+  }
+}
+
 fileprivate class ModuleCompileDelegate: JobExecutionDelegate {
   var failingModules = Set<String>()
   var commandMap: [Int: String] = [:]
@@ -149,11 +173,14 @@ fileprivate class ModuleCompileDelegate: JobExecutionDelegate {
   let verbose: Bool
   var failingCriticalOutputs: Set<VirtualPath>
   let logPath: AbsolutePath?
-  public init(_ jobs: [Job], _ diagnosticsEngine: DiagnosticsEngine, _ verbose: Bool, _ logPath: AbsolutePath?) {
+  let jsonDelegate: JSONOutputDelegate
+  init(_ jobs: [Job], _ diagnosticsEngine: DiagnosticsEngine, _ verbose: Bool,
+              _ logPath: AbsolutePath?, _ jsonDelegate: JSONOutputDelegate) {
     self.diagnosticsEngine = diagnosticsEngine
     self.verbose = verbose
     self.failingCriticalOutputs = Set<VirtualPath>(jobs.compactMap(ModuleCompileDelegate.getCriticalOutput))
     self.logPath = logPath
+    self.jsonDelegate = jsonDelegate
   }
 
   /// Dangling jobs are macabi-only modules. We should run those jobs if foundation
@@ -176,6 +203,7 @@ fileprivate class ModuleCompileDelegate: JobExecutionDelegate {
   }
 
   public func jobFinished(job: Job, result: ProcessResult, pid: Int) {
+    self.jsonDelegate.jobFinished(job, result)
     switch result.exitStatus {
     case .terminated(code: let code):
       if code == 0 {
@@ -250,6 +278,7 @@ fileprivate class ABICheckingDelegate: JobExecutionDelegate {
 
 public class PrebuiltModuleGenerationDelegate: JobExecutionDelegate {
 
+  fileprivate let jsonDelegate: JSONOutputDelegate
   fileprivate let compileDelegate: ModuleCompileDelegate
   fileprivate let abiCheckDelegate: ABICheckingDelegate
 
@@ -265,7 +294,10 @@ public class PrebuiltModuleGenerationDelegate: JobExecutionDelegate {
 
   public init(_ jobs: [Job], _ diagnosticsEngine: DiagnosticsEngine,
               _ verbose: Bool, _ logPath: AbsolutePath?) {
-    self.compileDelegate = ModuleCompileDelegate(jobs.filter(ModuleCompileDelegate.canHandle), diagnosticsEngine, verbose, logPath)
+    self.jsonDelegate = JSONOutputDelegate()
+    self.compileDelegate = ModuleCompileDelegate(jobs.filter(ModuleCompileDelegate.canHandle),
+                                                 diagnosticsEngine, verbose, logPath,
+                                                 self.jsonDelegate)
     self.abiCheckDelegate = ABICheckingDelegate(verbose, logPath)
   }
 
@@ -285,6 +317,13 @@ public class PrebuiltModuleGenerationDelegate: JobExecutionDelegate {
   }
   public var hasCriticalFailure: Bool {
     return compileDelegate.hasCriticalFailure
+  }
+  public func emitJsonOutput(to path: AbsolutePath) throws {
+    let data = try JSONEncoder().encode(self.jsonDelegate)
+    if let json = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers),
+       let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+      try localFileSystem.writeFileContents(path, bytes: ByteString(jsonData))
+    }
   }
 }
 

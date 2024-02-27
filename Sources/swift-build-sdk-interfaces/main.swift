@@ -78,6 +78,7 @@ do {
     exit(1)
   }
   let logDir = try getArgumentAsPath("-log-path")
+  let jsonPath = try getArgumentAsPath("-json-path")
   let collector = SDKPrebuiltModuleInputsCollector(sdkPath, diagnosticsEngine)
   var outputDir = try VirtualPath(path: rawOutputDir).absolutePath!
   // if the given output dir ends with 'prebuilt-modules', we should
@@ -174,6 +175,11 @@ do {
       exit(0)
     }
     let delegate = PrebuiltModuleGenerationDelegate(jobs, diagnosticsEngine, verbose, logDir)
+    defer {
+      if let jsonPath = jsonPath {
+        try! delegate.emitJsonOutput(to: jsonPath)
+      }
+    }
     do {
       try executor.execute(workload: DriverExecutorWorkload.init(jobs, nil, continueBuildingAfterErrors: true),
                            delegate: delegate, numParallelJobs: 128)
