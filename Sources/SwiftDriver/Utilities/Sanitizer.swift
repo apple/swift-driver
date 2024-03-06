@@ -41,7 +41,7 @@ public enum Sanitizer: String, Hashable {
     case .thread: return "tsan"
     case .undefinedBehavior: return "ubsan"
     case .fuzzer: return "fuzzer"
-    case .scudo: return "scudo"
+    case .scudo: return "scudo_standalone"
     }
   }
 }
