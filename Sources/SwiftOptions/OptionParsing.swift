@@ -37,11 +37,19 @@ extension OptionTable {
   ///
   /// Throws an error if the command line contains any errors.
   public func parse(_ arguments: [String],
-                    for driverKind: DriverKind, delayThrows: Bool = false) throws -> ParsedOptions {
+                    for driverKind: DriverKind,
+                    delayThrows: Bool = false,
+                    includeNoDriver: Bool = false) throws -> ParsedOptions {
     var trie = PrefixTrie<Option>()
     // Add all options, ignoring the .noDriver ones
-    for opt in options where !opt.attributes.contains(.noDriver) {
-      trie[opt.spelling] = opt
+    for opt in options {
+      if opt.attributes.contains(.noDriver) {
+        if includeNoDriver {
+          trie[opt.spelling] = opt
+        }
+      } else {
+        trie[opt.spelling] = opt
+      }
     }
 
     var parsedOptions = ParsedOptions()
@@ -91,7 +99,8 @@ extension OptionTable {
 
       let verifyOptionIsAcceptedByDriverKind = {
         // Make sure this option is supported by the current driver kind.
-        guard option.isAccepted(by: driverKind) else {
+        guard option.isAccepted(by: driverKind) ||
+                (option.attributes.contains(.noDriver) && includeNoDriver) else {
           throw OptionParseError.unsupportedOption(
             index: index - 1, argument: argument, option: option,
             currentDriverKind: driverKind)

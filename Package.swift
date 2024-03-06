@@ -24,6 +24,9 @@ let package = Package(
       name: "swift-help",
       targets: ["swift-help"]),
     .executable(
+      name: "swift-explain",
+      targets: ["swift-explain"]),
+    .executable(
       name: "swift-build-sdk-interfaces",
       targets: ["swift-build-sdk-interfaces"]),
     .library(
@@ -116,6 +119,15 @@ let package = Package(
       dependencies: [
         "SwiftOptions",
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
+        .product(name: "SwiftToolsSupport-auto", package: "swift-tools-support-core"),
+      ],
+      exclude: ["CMakeLists.txt"]),
+
+    /// The explain executable
+    .executableTarget(
+      name: "swift-explain",
+      dependencies: [
+        "SwiftOptions", "SwiftDriver",
         .product(name: "SwiftToolsSupport-auto", package: "swift-tools-support-core"),
       ],
       exclude: ["CMakeLists.txt"]),

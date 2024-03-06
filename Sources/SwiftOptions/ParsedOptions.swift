@@ -90,7 +90,7 @@ public struct ParsedOptions {
   public typealias Argument = ParsedOption.Argument
 
   /// The parsed options, which match up an option with its argument(s).
-  private var parsedOptions: [ParsedOption] = []
+  public var parsedOptions: [ParsedOption] = []
 
   /// Maps the canonical spelling of an option to all the instances of
   /// that option that we've seen in the map, and their index in the
