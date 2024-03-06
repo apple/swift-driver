@@ -400,25 +400,3 @@ extension Triple {
     }
   }
 }
-
-extension Triple.FeatureAvailability {
-  /// Linking `libarclite` is unnecessary for triples supporting this feature.
-  ///
-  /// This impacts the `-link-objc-runtime` flag in Swift, which is akin to the
-  /// `-fobjc-link-runtime` build setting in clang. When set, these flags
-  /// automatically link libobjc, and any compatibility libraries that don't
-  /// ship with the OS. The versions here are the first OSes that support
-  /// ARC natively in their respective copies of the Objective-C runtime,
-  /// and therefore do not require additional support libraries.
-  static let nativeARC = Self(
-    macOS: .available(since: Triple.Version(10, 11, 0)),
-    iOS: .available(since: Triple.Version(9, 0, 0)),
-    tvOS: .available(since: Triple.Version(9, 0, 0)),
-    watchOS: .availableInAllVersions
-  )
-  // When updating the versions listed here, please record the most recent
-  // feature being depended on and when it was introduced:
-  //
-  // - Make assigning 'nil' to an NSMutableDictionary subscript delete the
-  //   entry, like it does for Swift.Dictionary, rather than trap.
-}
