@@ -35,6 +35,7 @@ import class TSCBasic.Process
 import class TSCBasic.ProcessSet
 import protocol TSCBasic.DiagnosticData
 import var TSCBasic.localFileSystem
+import struct TSCBasic.AbsolutePath
 
 let interruptSignalSource = DispatchSource.makeSignalSource(signal: SIGINT)
 let diagnosticsEngine = DiagnosticsEngine(handlers: [Driver.stderrDiagnosticsHandler])
@@ -88,17 +89,38 @@ do {
   if case .subcommand(let subcommand) = mode {
     // We are running as a subcommand, try to find the subcommand adjacent to the executable we are running as.
     // If we didn't find the tool there, let the OS search for it.
-    let subcommandPath = Process.findExecutable(CommandLine.arguments[0])?.parentDirectory.appending(component: subcommand)
-                         ?? Process.findExecutable(subcommand)
+    let knownSwiftPMSubcommands: Set<String> = [
+      "swift-build",
+      "swift-experimental-sdk",
+      "swift-test",
+      "swift-run",
+      "swift-package-collection",
+      "swift-package-registry"
+    ]
+
+    let subcommandPath: AbsolutePath?
+    let argv0: String?
+
+    if knownSwiftPMSubcommands.contains(subcommand) {
+      subcommandPath = Process.findExecutable(CommandLine.arguments[0])?.parentDirectory.appending(component: "swift-package")
+                           ?? Process.findExecutable("swift-package")
+      // Set argv[0] to dispatch to the requested SwiftPM subcommand
+      argv0 = subcommandPath?.parentDirectory.appending(component: subcommand).pathString
+    } else {
+      subcommandPath = Process.findExecutable(CommandLine.arguments[0])?.parentDirectory.appending(component: subcommand)
+                           ?? Process.findExecutable(subcommand)
+      argv0 = subcommandPath?.pathString
+    }
 
     guard let subcommandPath = subcommandPath,
+          let argv0 = argv0,
           localFileSystem.exists(subcommandPath) else {
       throw Driver.Error.unknownOrMissingSubcommand(subcommand)
     }
 
     // Pass the full path to subcommand executable.
     var arguments = arguments
-    arguments[0] = subcommandPath.pathString
+    arguments[0] = argv0
 
     // Execute the subcommand.
     try exec(path: subcommandPath.pathString, args: arguments)
