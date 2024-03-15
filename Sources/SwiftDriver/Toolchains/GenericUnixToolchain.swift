@@ -66,10 +66,7 @@ public final class GenericUnixToolchain: Toolchain {
     switch tool {
     case .swiftCompiler:
       return try lookup(executable: "swift-frontend")
-    case .staticLinker(nil):
-      return try lookup(executable: "ar")
-    case .staticLinker(.llvmFull),
-         .staticLinker(.llvmThin):
+    case .staticLinker:
       return try lookup(executable: "llvm-ar")
     case .dynamicLinker:
       // FIXME: This needs to look in the tools_directory first.
