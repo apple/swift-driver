@@ -608,6 +608,7 @@ extension Option {
   public static let driverScanDependenciesNonLib: Option = Option("-nonlib-dependency-scanner", .flag, attributes: [.helpHidden], helpText: "Use calls to `swift-frontend -scan-dependencies` instead of dedicated dependency scanning library")
   public static let nostartfiles: Option = Option("-nostartfiles", .flag, attributes: [.helpHidden, .frontend, .noInteractive, .doesNotAffectIncrementalBuild], helpText: "Do not link in the Swift language startup routines")
   public static let nostdimport: Option = Option("-nostdimport", .flag, attributes: [.frontend], helpText: "Don't search the standard library import path for modules")
+  public static let nostdlib: Option = Option("-nostdlib", .flag, attributes: [.helpHidden], helpText: "Don't link the C and compiler runtime libraries", group: .linkerOption)
   public static let numThreads: Option = Option("-num-threads", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild, .cacheInvariant], metaVar: "<n>", helpText: "Enable multi-threading and specify number of threads")
   public static let omitExtensionBlockSymbols: Option = Option("-omit-extension-block-symbols", .flag, attributes: [.helpHidden, .frontend, .noInteractive, .supplementaryOutput], helpText: "Directly associate members and conformances with the extended nominal when generating symbol graphs instead of emitting 'swift.extension' symbols for extensions to external types")
   public static let Onone: Option = Option("-Onone", .flag, attributes: [.frontend, .moduleInterface], helpText: "Compile without any optimization", group: .O)
@@ -1437,6 +1438,7 @@ extension Option {
       Option.driverScanDependenciesNonLib,
       Option.nostartfiles,
       Option.nostdimport,
+      Option.nostdlib,
       Option.numThreads,
       Option.omitExtensionBlockSymbols,
       Option.Onone,
