@@ -252,22 +252,22 @@ extension InterModuleDependencyGraph {
 internal extension InterModuleDependencyGraph {
   func explainDependency(dependencyModuleName: String) throws -> [[ModuleDependencyId]]? {
     guard modules.contains(where: { $0.key.moduleName == dependencyModuleName }) else { return nil }
-    var results = [[ModuleDependencyId]]()
+    var results = Set<[ModuleDependencyId]>()
     try findAllPaths(source: .swift(mainModuleName),
                      to: dependencyModuleName,
                      pathSoFar: [.swift(mainModuleName)],
                      results: &results)
-    return Array(results)
+    return results.sorted(by: { $0.count < $1.count })
   }
 
 
   private func findAllPaths(source: ModuleDependencyId,
                             to moduleName: String,
                             pathSoFar: [ModuleDependencyId],
-                            results: inout [[ModuleDependencyId]]) throws {
+                            results: inout Set<[ModuleDependencyId]>) throws {
     let sourceInfo = try moduleInfo(of: source)
     // If the source is our target, we are done
-    guard source.moduleName != moduleName else {
+    if source.moduleName == moduleName {
       // If the source is a target Swift module, also check if it
       // depends on a corresponding Clang module with the same name.
       // If it does, add it to the path as well.
@@ -276,8 +276,7 @@ internal extension InterModuleDependencyGraph {
          dependencies.contains(.clang(moduleName)) {
         completePath.append(.clang(moduleName))
       }
-      results.append(completePath)
-      return
+      results.insert(completePath)
     }
 
     var allDependencies = sourceInfo.directDependencies ?? []

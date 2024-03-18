@@ -1923,6 +1923,7 @@ final class ExplicitModuleBuildTests: XCTestCase {
         print(diag.behavior)
         print(diag.message)
       }
+      XCTAssertEqual(driver.diagnosticEngine.diagnostics.filter { $0.behavior == .note}.count, 2)
       XCTAssertTrue(driver.diagnosticEngine.diagnostics.contains { $0.behavior == .note &&
                                                                    $0.message.text == "[testTraceDependency] -> [A] -> [A](ObjC)"})
       XCTAssertTrue(driver.diagnosticEngine.diagnostics.contains { $0.behavior == .note &&
