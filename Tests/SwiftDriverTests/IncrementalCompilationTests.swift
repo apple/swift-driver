@@ -84,8 +84,9 @@ final class IncrementalCompilationTests: XCTestCase {
      "-Xfrontend", "-disable-implicit-concurrency-module-import",
      "-Xfrontend", "-disable-implicit-string-processing-module-import",
      "-I", explicitCDependenciesPath.nativePathString(escaped: true),
-     "-I", explicitSwiftDependenciesPath.nativePathString(escaped: true)]
+     "-I", explicitSwiftDependenciesPath.nativePathString(escaped: true)] + extraExplicitBuildArgs
   }
+  var extraExplicitBuildArgs: [String] = []
 
   override func setUp() {
     self.tempDir = try! withTemporaryDirectory(removeTreeOnDeinit: false) {$0}
@@ -97,6 +98,10 @@ final class IncrementalCompilationTests: XCTestCase {
                                to: OFM)
     for (base, contents) in baseNamesAndContents {
       write(contents, to: base)
+    }
+    let driver = try! Driver(args: ["swiftc", "-v"])
+    if driver.isFrontendArgSupported(.moduleLoadMode) {
+      self.extraExplicitBuildArgs = ["-Xfrontend", "-module-load-mode", "-Xfrontend", "prefer-interface"]
     }
   }
 

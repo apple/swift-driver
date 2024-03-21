@@ -170,7 +170,6 @@ extension Option {
   public static let disableDeserializationSafety: Option = Option("-disable-deserialization-safety", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Don't avoid reading potentially unsafe decls in swiftmodules")
   public static let disableDiagnosticPasses: Option = Option("-disable-diagnostic-passes", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Don't run diagnostic passes")
   public static let disableEmitGenericClassRoTList: Option = Option("-disable-emit-generic-class-ro_t-list", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable emission of a section with references to class_ro_t of generic class patterns")
-  public static let disableExperimentalAssociatedTypeInference: Option = Option("-disable-experimental-associated-type-inference", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable experimental associated type inference improvements")
   public static let disableExperimentalClangImporterDiagnostics: Option = Option("-disable-experimental-clang-importer-diagnostics", .flag, attributes: [.helpHidden, .frontend, .noDriver, .moduleInterface], helpText: "Disable experimental diagnostics when importing C, C++, and Objective-C libraries")
   public static let disableExperimentalLifetimeDependenceInference: Option = Option("-disable-experimental-lifetime-dependence-inference", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable experimental lifetime dependence inference")
   public static let disableExperimentalOpenedExistentialTypes: Option = Option("-disable-experimental-opened-existential-types", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable experimental support for implicitly opened existentials")
@@ -178,6 +177,7 @@ extension Option {
   public static let disableExperimentalStringProcessing: Option = Option("-disable-experimental-string-processing", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable experimental string processing")
   public static let disableFailOnError: Option = Option("-disable-fail-on-error", .flag, attributes: [.noDriver], helpText: "Don't exit with a nonzero status if errors are emitted")
   public static let disableFailOnError_: Option = Option("--disable-fail-on-error", .flag, alias: Option.disableFailOnError, attributes: [.noDriver], helpText: "Don't exit with a nonzero status if errors are emitted")
+  public static let disableFragileResilientProtocolWitnesses: Option = Option("-disable-fragile-relative-protocol-tables", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable relative protocol witness tables")
   public static let disableGenericMetadataPrespecialization: Option = Option("-disable-generic-metadata-prespecialization", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Do not statically specialize metadata for generic types at types that are known to be used in source.")
   public static let disableImplicitBacktracingModuleImport: Option = Option("-disable-implicit-backtracing-module-import", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable the implicit import of the _Backtracing module.")
   public static let disableImplicitConcurrencyModuleImport: Option = Option("-disable-implicit-concurrency-module-import", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable the implicit import of the _Concurrency module.")
@@ -193,12 +193,14 @@ extension Option {
   public static let disableLayoutStringValueWitnessesInstantiation: Option = Option("-disable-layout-string-value-witnesses-instantiation", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable runtime instantiation of layout string value witnesses for generic types")
   public static let disableLayoutStringValueWitnesses: Option = Option("-disable-layout-string-value-witnesses", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable layout string based value witnesses")
   public static let disableLegacyTypeInfo: Option = Option("-disable-legacy-type-info", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Completely disable legacy type layout")
+  public static let disableLifetimeDependenceDiagnostics: Option = Option("-disable-lifetime-dependence-diagnostics", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable lifetime dependence diagnostics for Nonescapable types.")
   public static let disableLlvmOptzns: Option = Option("-disable-llvm-optzns", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Don't run LLVM optimization passes")
   public static let disableLlvmValueNames: Option = Option("-disable-llvm-value-names", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Don't add names to local values in LLVM IR")
   public static let disableLlvmVerify: Option = Option("-disable-llvm-verify", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Don't run the LLVM IR verifier.")
   public static let disableMigratorFixits: Option = Option("-disable-migrator-fixits", .flag, attributes: [.frontend, .noInteractive], helpText: "Disable the Migrator phase which automatically applies fix-its")
   public static let disableModulesValidateSystemHeaders: Option = Option("-disable-modules-validate-system-headers", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable validating system headers in the Clang importer")
-  public static let disableNamedLazyMemberLoading: Option = Option("-disable-named-lazy-member-loading", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable per-name lazy member loading")
+  public static let disableNamedLazyImportAsMemberLoading: Option = Option("-disable-named-lazy-import-as-member-loading", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Import all of a type's import-as-member globals together, as Swift 5.10 and earlier did; temporary workaround for modules that are sensitive to this change")
+  public static let disableNamedLazyMemberLoading: Option = Option("-disable-named-lazy-member-loading", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable per-name lazy member loading (obsolete)")
   public static let disableNewLlvmPassManager: Option = Option("-disable-new-llvm-pass-manager", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable the new llvm pass manager")
   public static let disableNewOperatorLookup: Option = Option("-disable-new-operator-lookup", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Disable the new operator decl and precedencegroup lookup behavior")
   public static let disableNonfrozenEnumExhaustivityDiagnostics: Option = Option("-disable-nonfrozen-enum-exhaustivity-diagnostics", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Allow switches over non-frozen enums without catch-all cases")
@@ -268,6 +270,7 @@ extension Option {
   public static let dumpApiPath: Option = Option("-dump-api-path", .separate, attributes: [.frontend, .noDriver, .cacheInvariant], helpText: "The path to output swift interface files for the compiled source files")
   public static let dumpAst: Option = Option("-dump-ast", .flag, attributes: [.frontend, .noInteractive, .doesNotAffectIncrementalBuild], helpText: "Parse and type-check input file(s) and dump AST(s)", group: .modes)
   public static let dumpClangDiagnostics: Option = Option("-dump-clang-diagnostics", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Dump Clang diagnostics to stderr")
+  public static let dumpClangLookupTables: Option = Option("-dump-clang-lookup-tables", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Dump the importer's Swift-name-to-Clang-name lookup tables to stderr")
   public static let dumpInterfaceHash: Option = Option("-dump-interface-hash", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Parse input file(s) and dump interface token hash(es)", group: .modes)
   public static let dumpJit: Option = Option("-dump-jit", .joinedOrSeparate, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Dump JIT contents")
   public static let dumpMacroExpansions: Option = Option("-dump-macro-expansions", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Dumps the results of each macro expansion")
@@ -381,7 +384,6 @@ extension Option {
   public static let enableDynamicReplacementChaining: Option = Option("-enable-dynamic-replacement-chaining", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable chaining of dynamic replacements")
   public static let enableEmitGenericClassRoTList: Option = Option("-enable-emit-generic-class-ro_t-list", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable emission of a section with references to class_ro_t of generic class patterns")
   public static let enableExperimentalAdditiveArithmeticDerivation: Option = Option("-enable-experimental-additive-arithmetic-derivation", .flag, attributes: [.frontend], helpText: "Enable experimental 'AdditiveArithmetic' derived conformances")
-  public static let enableExperimentalAssociatedTypeInference: Option = Option("-enable-experimental-associated-type-inference", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable experimental associated type inference improvements")
   public static let enableAsyncDemotion: Option = Option("-enable-experimental-async-demotion", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enables an optimization pass to demote async functions.")
   public static let enableExperimentalAsyncTopLevel: Option = Option("-enable-experimental-async-top-level", .flag, attributes: [.helpHidden, .frontend, .noDriver, .moduleInterface], helpText: "Enable experimental concurrency in top-level code")
   public static let enableExperimentalConcisePoundFile: Option = Option("-enable-experimental-concise-pound-file", .flag, attributes: [.frontend, .moduleInterface], helpText: "Enable experimental concise '#file' identifier")
@@ -395,12 +397,13 @@ extension Option {
   public static let enableExperimentalLifetimeDependenceInference: Option = Option("-enable-experimental-lifetime-dependence-inference", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable experimental lifetime dependence inference")
   public static let enableExperimentalMoveOnly: Option = Option("-enable-experimental-move-only", .flag, attributes: [.helpHidden, .frontend, .noDriver, .moduleInterface], helpText: "Enable experimental move only")
   public static let enableExperimentalNamedOpaqueTypes: Option = Option("-enable-experimental-named-opaque-types", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable experimental support for named opaque result types")
-  public static let enableExperimentalOpaqueTypeErasure: Option = Option("-enable-experimental-opaque-type-erasure", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Type-erases opaque types that conform to @_typeEraser protocols")
+  public static let enableExperimentalOpaqueTypeErasure: Option = Option("-enable-experimental-opaque-type-erasure", .flag, attributes: [.helpHidden, .frontend, .noDriver, .moduleInterface], helpText: "Type-erases opaque types that conform to @_typeEraser protocols")
   public static let enableExperimentalOpenedExistentialTypes: Option = Option("-enable-experimental-opened-existential-types", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable experimental support for implicitly opened existentials")
   public static let enableExperimentalPairwiseBuildBlock: Option = Option("-enable-experimental-pairwise-build-block", .flag, attributes: [.helpHidden, .frontend, .noDriver, .moduleInterface], helpText: "Enable experimental pairwise 'buildBlock' for result builders")
   public static let enableExperimentalStaticAssert: Option = Option("-enable-experimental-static-assert", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable experimental #assert")
   public static let enableExperimentalStringProcessing: Option = Option("-enable-experimental-string-processing", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable experimental string processing")
   public static let enableExplicitExistentialTypes: Option = Option("-enable-explicit-existential-types", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable experimental support for explicit existential types")
+  public static let enableFragileResilientProtocolWitnesses: Option = Option("-enable-fragile-relative-protocol-tables", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable relative protocol witness tables")
   public static let enableImplicitBacktracingModuleImport: Option = Option("-enable-implicit-backtracing-module-import", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable the implicit import of the _Backtracing module.")
   public static let enableImplicitDynamic: Option = Option("-enable-implicit-dynamic", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Add 'dynamic' to all declarations")
   public static let enableImportPtrauthFieldFunctionPointers: Option = Option("-enable-import-ptrauth-field-function-pointers", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable import of custom ptrauth qualified field function pointers")
@@ -413,6 +416,7 @@ extension Option {
   public static let enableLexicalLifetimes: Option = Option("-enable-lexical-lifetimes=", .joined, attributes: [.helpHidden, .frontend, .noDriver], metaVar: "true|false", helpText: "Whether to enable lexical lifetimes")
   public static let enableLexicalLifetimesNoArg: Option = Option("-enable-lexical-lifetimes", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable lexical lifetimes")
   public static let enableLibraryEvolution: Option = Option("-enable-library-evolution", .flag, attributes: [.frontend, .moduleInterface], helpText: "Build the module to allow binary-compatible library evolution")
+  public static let enableLifetimeDependenceDiagnostics: Option = Option("-enable-lifetime-dependence-diagnostics", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable lifetime dependence diagnostics for Nonescapable types.")
   public static let enableLlvmValueNames: Option = Option("-enable-llvm-value-names", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Add names to local values in LLVM IR")
   public static let enableLlvmVfe: Option = Option("-enable-llvm-vfe", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Use LLVM IR Virtual Function Elimination on Swift class virtual tables")
   public static let enableLlvmWme: Option = Option("-enable-llvm-wme", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Use LLVM IR Witness Method Elimination on Swift protocol witness tables")
@@ -454,6 +458,7 @@ extension Option {
   public static let enforceExclusivityEQ: Option = Option("-enforce-exclusivity=", .joined, attributes: [.frontend, .moduleInterface], metaVar: "<enforcement>", helpText: "Enforce law of exclusivity")
   public static let entryPointFunctionName: Option = Option("-entry-point-function-name", .separate, attributes: [.helpHidden, .frontend, .noDriver], metaVar: "<string>", helpText: "Name of the entry point function")
   public static let experimentalAllowModuleWithCompilerErrors: Option = Option("-experimental-allow-module-with-compiler-errors", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Attempt to output .swiftmodule, regardless of compilation errors")
+  public static let experimentalAllowNonResilientAccess: Option = Option("-experimental-allow-non-resilient-access", .flag, attributes: [.frontend], helpText: "Allow non-resilient access by generating all contents besides exportable decls")
   public static let experimentalCForeignReferenceTypes: Option = Option("-experimental-c-foreign-reference-types", .flag, attributes: [.helpHidden, .frontend, .moduleInterface], helpText: "Enable experimental C foreign references types (with reference coutning).")
   public static let experimentalClangImporterDirectCc1Scan: Option = Option("-experimental-clang-importer-direct-cc1-scan", .flag, attributes: [.helpHidden, .frontend], helpText: "Enables swift driver to construct swift-frontend invocations using -direct-clang-cc1-module-build")
   public static let experimentalCxxStdlib: Option = Option("-experimental-cxx-stdlib", .separate, attributes: [.helpHidden], helpText: "C++ standard library to use; forwarded to Clang's -stdlib flag")
@@ -464,6 +469,7 @@ extension Option {
   public static let experimentalLazyTypecheck: Option = Option("-experimental-lazy-typecheck", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Type-check lazily as needed to produce requested outputs")
   public static let experimentalOneWayClosureParams: Option = Option("-experimental-one-way-closure-params", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Enable experimental support for one-way closure parameters")
   public static let experimentalPackageBypassResilience: Option = Option("-experimental-package-bypass-resilience", .flag, attributes: [.frontend], helpText: "Enable optimization to bypass resilience within a package")
+  public static let ExperimentalPackageCMO: Option = Option("-experimental-package-cmo", .flag, attributes: [.frontend], helpText: "Enable optimization to perform defalut CMO within a package boundary")
   public static let experimentalPackageInterfaceLoad: Option = Option("-experimental-package-interface-load", .flag, attributes: [.helpHidden, .frontend], helpText: "Enables loading a package interface if in the same package specified with package-name")
   public static let ExperimentalPerformanceAnnotations: Option = Option("-experimental-performance-annotations", .flag, attributes: [.helpHidden, .frontend], helpText: "Deprecated, has no effect")
   public static let platformCCallingConventionEQ: Option = Option("-experimental-platform-c-calling-convention=", .joined, alias: Option.platformCCallingConvention, attributes: [.helpHidden, .frontend, .noDriver])
@@ -591,6 +597,7 @@ extension Option {
   public static let moduleLinkNameEQ: Option = Option("-module-link-name=", .joined, alias: Option.moduleLinkName, attributes: [.frontend])
   public static let moduleLinkName: Option = Option("-module-link-name", .separate, attributes: [.frontend, .moduleInterface], helpText: "Library to link against when using this module")
   public static let moduleListFile: Option = Option("-module-list-file", .joinedOrSeparate, attributes: [.noDriver, .argumentIsPath], helpText: "File containing a new-line separated list of modules")
+  public static let moduleLoadMode: Option = Option("-module-load-mode", .separate, attributes: [.helpHidden, .frontend, .noDriver], metaVar: "only-interface|prefer-interface|prefer-serialized|only-serialized", helpText: "Module loading mode")
   public static let moduleNameEQ: Option = Option("-module-name=", .joined, alias: Option.moduleName, attributes: [.frontend])
   public static let moduleName: Option = Option("-module-name", .separate, attributes: [.frontend, .moduleInterface], helpText: "Name of the module to build")
   public static let module: Option = Option("-module", .separate, attributes: [.noDriver], metaVar: "<name>", helpText: "Names of modules")
@@ -603,6 +610,7 @@ extension Option {
   public static let noEmitModuleSeparatelyWMO: Option = Option("-no-emit-module-separately-wmo", .flag, attributes: [.helpHidden], helpText: "Force emitting the swiftmodule in the same job in wmo builds")
   public static let noEmitModuleSeparately: Option = Option("-no-emit-module-separately", .flag, attributes: [.helpHidden], helpText: "Force using merge-module as the incremental build mode")
   public static let noLinkObjcRuntime: Option = Option("-no-link-objc-runtime", .flag, attributes: [.helpHidden, .doesNotAffectIncrementalBuild], helpText: "Deprecated")
+  public static let noScannerModuleValidation: Option = Option("-no-scanner-module-validation", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Do not validate binary modules in scanner and delegate the validation to swift-frontend")
   public static let noSerializeDebuggingOptions: Option = Option("-no-serialize-debugging-options", .flag, attributes: [.frontend, .noDriver], helpText: "Never serialize options for debugging (default: only for apps)")
   public static let noStaticExecutable: Option = Option("-no-static-executable", .flag, attributes: [.helpHidden], helpText: "Don't statically link the executable")
   public static let noStaticStdlib: Option = Option("-no-static-stdlib", .flag, attributes: [.helpHidden, .doesNotAffectIncrementalBuild], helpText: "Don't statically link the Swift standard library")
@@ -1006,7 +1014,6 @@ extension Option {
       Option.disableDeserializationSafety,
       Option.disableDiagnosticPasses,
       Option.disableEmitGenericClassRoTList,
-      Option.disableExperimentalAssociatedTypeInference,
       Option.disableExperimentalClangImporterDiagnostics,
       Option.disableExperimentalLifetimeDependenceInference,
       Option.disableExperimentalOpenedExistentialTypes,
@@ -1014,6 +1021,7 @@ extension Option {
       Option.disableExperimentalStringProcessing,
       Option.disableFailOnError,
       Option.disableFailOnError_,
+      Option.disableFragileResilientProtocolWitnesses,
       Option.disableGenericMetadataPrespecialization,
       Option.disableImplicitBacktracingModuleImport,
       Option.disableImplicitConcurrencyModuleImport,
@@ -1029,11 +1037,13 @@ extension Option {
       Option.disableLayoutStringValueWitnessesInstantiation,
       Option.disableLayoutStringValueWitnesses,
       Option.disableLegacyTypeInfo,
+      Option.disableLifetimeDependenceDiagnostics,
       Option.disableLlvmOptzns,
       Option.disableLlvmValueNames,
       Option.disableLlvmVerify,
       Option.disableMigratorFixits,
       Option.disableModulesValidateSystemHeaders,
+      Option.disableNamedLazyImportAsMemberLoading,
       Option.disableNamedLazyMemberLoading,
       Option.disableNewLlvmPassManager,
       Option.disableNewOperatorLookup,
@@ -1104,6 +1114,7 @@ extension Option {
       Option.dumpApiPath,
       Option.dumpAst,
       Option.dumpClangDiagnostics,
+      Option.dumpClangLookupTables,
       Option.dumpInterfaceHash,
       Option.dumpJit,
       Option.dumpMacroExpansions,
@@ -1217,7 +1228,6 @@ extension Option {
       Option.enableDynamicReplacementChaining,
       Option.enableEmitGenericClassRoTList,
       Option.enableExperimentalAdditiveArithmeticDerivation,
-      Option.enableExperimentalAssociatedTypeInference,
       Option.enableAsyncDemotion,
       Option.enableExperimentalAsyncTopLevel,
       Option.enableExperimentalConcisePoundFile,
@@ -1237,6 +1247,7 @@ extension Option {
       Option.enableExperimentalStaticAssert,
       Option.enableExperimentalStringProcessing,
       Option.enableExplicitExistentialTypes,
+      Option.enableFragileResilientProtocolWitnesses,
       Option.enableImplicitBacktracingModuleImport,
       Option.enableImplicitDynamic,
       Option.enableImportPtrauthFieldFunctionPointers,
@@ -1249,6 +1260,7 @@ extension Option {
       Option.enableLexicalLifetimes,
       Option.enableLexicalLifetimesNoArg,
       Option.enableLibraryEvolution,
+      Option.enableLifetimeDependenceDiagnostics,
       Option.enableLlvmValueNames,
       Option.enableLlvmVfe,
       Option.enableLlvmWme,
@@ -1290,6 +1302,7 @@ extension Option {
       Option.enforceExclusivityEQ,
       Option.entryPointFunctionName,
       Option.experimentalAllowModuleWithCompilerErrors,
+      Option.experimentalAllowNonResilientAccess,
       Option.experimentalCForeignReferenceTypes,
       Option.experimentalClangImporterDirectCc1Scan,
       Option.experimentalCxxStdlib,
@@ -1300,6 +1313,7 @@ extension Option {
       Option.experimentalLazyTypecheck,
       Option.experimentalOneWayClosureParams,
       Option.experimentalPackageBypassResilience,
+      Option.ExperimentalPackageCMO,
       Option.experimentalPackageInterfaceLoad,
       Option.ExperimentalPerformanceAnnotations,
       Option.platformCCallingConventionEQ,
@@ -1427,6 +1441,7 @@ extension Option {
       Option.moduleLinkNameEQ,
       Option.moduleLinkName,
       Option.moduleListFile,
+      Option.moduleLoadMode,
       Option.moduleNameEQ,
       Option.moduleName,
       Option.module,
@@ -1439,6 +1454,7 @@ extension Option {
       Option.noEmitModuleSeparatelyWMO,
       Option.noEmitModuleSeparately,
       Option.noLinkObjcRuntime,
+      Option.noScannerModuleValidation,
       Option.noSerializeDebuggingOptions,
       Option.noStaticExecutable,
       Option.noStaticStdlib,
