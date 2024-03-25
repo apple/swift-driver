@@ -174,8 +174,16 @@ extension GenericUnixToolchain {
         isShared: hasRuntimeArgs
       )
 
-      if hasRuntimeArgs && targetTriple.environment != .android &&
-          toolchainStdlibRpath {
+      // An exception is made for native Android environments like the Termux
+      // app as they build and run natively like a Unix environment on Android,
+      // so add the stdlib RPATH by default there.
+      #if os(Android)
+      let addRpath = true
+      #else
+      let addRpath = targetTriple.environment != .android
+      #endif
+
+      if hasRuntimeArgs && addRpath && toolchainStdlibRpath {
         // FIXME: We probably shouldn't be adding an rpath here unless we know
         //        ahead of time the standard library won't be copied.
         for path in runtimePaths {
