@@ -16,7 +16,8 @@ if(POLICY CMP0091)
   cmake_policy(SET CMP0091 NEW)
 endif()
 
-project(SwiftDriver LANGUAGES C Swift)
+project(SwiftDriver
+  LANGUAGES C CXX Swift)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -34,6 +35,7 @@ set(CMAKE_Swift_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/swift)
 add_compile_options($<$<COMPILE_LANGUAGE:Swift>:-I$<SEMICOLON>${CMAKE_CURRENT_SOURCE_DIR}/Sources/CSwiftScan/include>)
 
 option(BUILD_SHARED_LIBS "Build shared libraries by default" YES)
+option(SWIFT_DRIVER_BUILD_TOOLS "Build makeOption" NO)
 
 # Toolchain Vended Dependencies
 find_package(dispatch QUIET)

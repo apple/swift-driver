@@ -13,3 +13,7 @@ add_subdirectory(SwiftDriverExecution)
 add_subdirectory(swift-build-sdk-interfaces)
 add_subdirectory(swift-driver)
 add_subdirectory(swift-help)
+
+if(SWIFT_DRIVER_BUILD_TOOLS)
+  add_subdirectory(makeOptions)
+endif()
