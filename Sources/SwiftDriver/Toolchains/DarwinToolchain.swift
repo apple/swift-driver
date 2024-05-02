@@ -188,14 +188,6 @@ public final class DarwinToolchain: Toolchain {
                            targetVariantTriple: Triple?,
                            compilerOutputType: FileType?,
                            diagnosticsEngine: DiagnosticsEngine) throws {
-    // On non-darwin hosts, libArcLite won't be found and a warning will be emitted
-    // Guard for the sake of tests running on all platforms
-    #if canImport(Darwin)
-    // Validating arclite library path when link-objc-runtime.
-    validateLinkObjcRuntimeARCLiteLib(&parsedOptions,
-                                      targetTriple: targetTriple,
-                                      diagnosticsEngine: diagnosticsEngine)
-    #endif
     // Validating apple platforms deployment targets.
     try validateDeploymentTarget(&parsedOptions, targetTriple: targetTriple,
                                  compilerOutputType: compilerOutputType)
@@ -255,22 +247,6 @@ public final class DarwinToolchain: Toolchain {
       if let (platform, minVersion) = minVersions[os], targetTriple.version(for: platform) >= minVersion {
         throw ToolchainValidationError.invalidDeploymentTargetForIR(platform: platform, version: minVersion, archName: targetTriple.archName)
       }
-    }
-  }
-
-  func validateLinkObjcRuntimeARCLiteLib(_ parsedOptions: inout ParsedOptions,
-                                           targetTriple: Triple,
-                                           diagnosticsEngine: DiagnosticsEngine) {
-    guard parsedOptions.hasFlag(positive: .linkObjcRuntime,
-                                negative: .noLinkObjcRuntime,
-                                default: !targetTriple.supports(.nativeARC))
-    else {
-      return
-    }
-
-    guard let _ = try? findARCLiteLibPath() else {
-        diagnosticsEngine.emit(.warn_arclite_not_found_when_link_objc_runtime)
-        return
     }
   }
 
@@ -461,15 +437,6 @@ public final class DarwinToolchain: Toolchain {
       commandLine.appendFlag("\(platformPathRoot.localPluginPath.name)#\(platformPathRoot.pluginServerPath.name)")
     }
   }
-}
-
-extension Diagnostic.Message {
-    static var warn_arclite_not_found_when_link_objc_runtime: Diagnostic.Message {
-      .warning(
-        "unable to find Objective-C runtime support library 'arclite'; " +
-        "pass '-no-link-objc-runtime' to silence this warning"
-      )
-    }
 }
 
 private extension Version {

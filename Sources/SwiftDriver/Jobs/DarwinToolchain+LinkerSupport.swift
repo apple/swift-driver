@@ -16,38 +16,6 @@ import struct TSCBasic.AbsolutePath
 import struct TSCBasic.RelativePath
 
 extension DarwinToolchain {
-  internal func findXcodeClangPath() throws -> AbsolutePath? {
-    let result = try executor.checkNonZeroExit(
-      args: "xcrun", "-toolchain", "default", "-f", "clang",
-      environment: env
-    ).trimmingCharacters(in: .whitespacesAndNewlines)
-
-    return result.isEmpty ? nil : try AbsolutePath(validating: result)
-  }
-
-  internal func findXcodeClangLibPath(_ additionalPath: String) throws -> AbsolutePath? {
-    let path = try getToolPath(.swiftCompiler)
-      .parentDirectory // 'swift'
-      .parentDirectory // 'bin'
-      .appending(components: "lib", additionalPath)
-
-    if fileSystem.exists(path) { return path }
-
-    // If we don't have a 'lib/arc/' directory, find the "arclite" library
-    // relative to the Clang in the active Xcode.
-    if let clangPath = try? findXcodeClangPath() {
-      return clangPath
-        .parentDirectory // 'clang'
-        .parentDirectory // 'bin'
-        .appending(components: "lib", additionalPath)
-    }
-    return nil
-  }
-
-  internal func findARCLiteLibPath() throws -> AbsolutePath? {
-    return try findXcodeClangLibPath("arc")
-  }
-
   /// Adds the arguments necessary to link the files from the given set of
   /// options for a Darwin platform.
   public func addPlatformSpecificLinkerArgs(
@@ -224,13 +192,6 @@ extension DarwinToolchain {
     if let sdkPath = targetInfo.sdkPath?.path {
       commandLine.appendFlag("--sysroot")
       commandLine.appendPath(VirtualPath.lookup(sdkPath))
-    }
-
-    // -link-objc-runtime also implies -fobjc-link-runtime
-    if parsedOptions.hasFlag(positive: .linkObjcRuntime,
-                             negative: .noLinkObjcRuntime,
-                             default: false) {
-      commandLine.appendFlag("-fobjc-link-runtime")
     }
 
     let targetTriple = targetInfo.target.triple

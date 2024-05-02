@@ -3076,6 +3076,10 @@ extension Driver {
         diagnosticsEngine.emit(.error_hermetic_seal_requires_lto)
       }
     }
+    if parsedOptions.hasArgument(.linkObjcRuntime) ||
+        parsedOptions.hasArgument(.noLinkObjcRuntime) {
+      diagnosticsEngine.emit(.warning_darwin_link_objc_deprecated())
+    }
   }
 
   private static func validateSanitizerAddressUseOdrIndicatorFlag(

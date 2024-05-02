@@ -695,6 +695,15 @@ final class SwiftDriverTests: XCTestCase {
     }
   }
 
+  func testLinkObjCFlagWarning() throws {
+    try assertDriverDiagnostics(args: "swiftc", "foo.swift", "-link-objc-runtime") {
+      $1.expect(.warning("-link-objc-runtime is no longer supported on Apple platforms"))
+    }
+    try assertDriverDiagnostics(args: "swiftc", "foo.swift", "-no-link-objc-runtime") {
+      $1.expect(.warning("-link-objc-runtime is no longer supported on Apple platforms"))
+    }
+  }
+
   func testHermeticSealAtLink() throws {
     try assertNoDriverDiagnostics(args: "swiftc", "foo.swift", "-experimental-hermetic-seal-at-link", "-lto=llvm-full") { driver in
       let jobs = try driver.planBuild()
@@ -1872,39 +1881,6 @@ final class SwiftDriverTests: XCTestCase {
 
       XCTAssertFalse(cmd.contains(.flag("-static")))
       XCTAssertFalse(cmd.contains(.flag("-shared")))
-    }
-
-    do {
-      // -fobjc-link-runtime default
-      var driver = try Driver(args: commonArgs + ["-emit-library", "-target", "x86_64-apple-macosx10.15"], env: env)
-      let plannedJobs = try driver.planBuild()
-      XCTAssertEqual(3, plannedJobs.count)
-      let linkJob = plannedJobs[2]
-      XCTAssertEqual(linkJob.kind, .link)
-      let cmd = linkJob.commandLine
-      XCTAssertFalse(cmd.contains(.flag("-fobjc-link-runtime")))
-    }
-
-    do {
-      // -fobjc-link-runtime enable
-      var driver = try Driver(args: commonArgs + ["-emit-library", "-target", "x86_64-apple-macosx10.15", "-link-objc-runtime"], env: env)
-      let plannedJobs = try driver.planBuild()
-      XCTAssertEqual(3, plannedJobs.count)
-      let linkJob = plannedJobs[2]
-      XCTAssertEqual(linkJob.kind, .link)
-      let cmd = linkJob.commandLine
-      XCTAssertTrue(cmd.contains(.flag("-fobjc-link-runtime")))
-    }
-
-    do {
-      // -fobjc-link-runtime disable override
-      var driver = try Driver(args: commonArgs + ["-emit-library", "-target", "x86_64-apple-macosx10.15", "-link-objc-runtime", "-no-link-objc-runtime"], env: env)
-      let plannedJobs = try driver.planBuild()
-      XCTAssertEqual(3, plannedJobs.count)
-      let linkJob = plannedJobs[2]
-      XCTAssertEqual(linkJob.kind, .link)
-      let cmd = linkJob.commandLine
-      XCTAssertFalse(cmd.contains(.flag("-fobjc-link-runtime")))
     }
 
     do {
@@ -4234,11 +4210,6 @@ final class SwiftDriverTests: XCTestCase {
 
     // Ensure arm64_32 is not restricted to back-deployment like other 32-bit archs (armv7k/i386).
     XCTAssertNoThrow(try Driver(args: ["swiftc", "-emit-module", "-c", "-target", "arm64_32-apple-watchos12.0", "foo.swift"]))
-
-    // On non-darwin hosts, libArcLite won't be found and a warning will be emitted
-    #if os(macOS)
-    try assertNoDriverDiagnostics(args: "swiftc", "-c", "-target", "x86_64-apple-macosx10.14", "-link-objc-runtime", "foo.swift")
-    #endif
   }
 
   func testProfileArgValidation() throws {
