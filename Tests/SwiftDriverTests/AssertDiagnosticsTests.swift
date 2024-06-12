@@ -158,11 +158,13 @@ class FailableTestCase: XCTestCase {
 
     defer {
       if anticipatedFailures > 0 {
-        recordFailure(
-          withDescription: "\(anticipatedFailures) failure(s) were supposed to occur, but did not: \(message)",
-          inFile: file, atLine: line,
-          expected: false
-        )
+        let context = XCTSourceCodeContext(
+                            location: XCTSourceCodeLocation(
+                                filePath: file, lineNumber: line))
+        self.record(XCTIssue(type: .assertionFailure,
+                             compactDescription: "\(anticipatedFailures) failure(s) were supposed to occur, but did not: \(message)",
+                             detailedDescription: nil,
+                             sourceCodeContext: context))
       }
       anticipatedFailures = outer
     }
@@ -175,24 +177,12 @@ class FailableTestCase: XCTestCase {
     anticipatedFailures = 0
   }
 
-  override func recordFailure(
-    withDescription description: String,
-    inFile filePath: String, atLine lineNumber: Int,
-    expected: Bool
-  ) {
+  override func record(_ issue: XCTIssue) {
     guard anticipatedFailures == 0 else {
       anticipatedFailures -= 1
       return
     }
 
-    if #available(macOS 10.13, *) {
-      super.recordFailure(
-        withDescription: description,
-        inFile: filePath, atLine: lineNumber,
-        expected: expected
-      )
-    } else {
-      fatalError(description, line: UInt(lineNumber))
-    }
+    super.record(issue)
   }
 }
