@@ -1401,7 +1401,7 @@ extension Driver {
       }
       responseFile = absolutePath
     }
-    return fileSystem.isFile(responseFile) ? responseFile : nil
+    return fileSystem.isReadable(responseFile) ? responseFile : nil
   }
 
   /// Tracks the given response file and returns a token if it has not already

@@ -1654,6 +1654,17 @@ final class SwiftDriverTests: XCTestCase {
     }
   }
 
+  /// Tests that response files can be special files, for example via shell redirect:
+  ///   swiftc @<(printf "%q\n" -print-target-info)
+  func testSpecialFileAsResponseFile() throws {
+    let diags = DiagnosticsEngine()
+    try withTemporaryFile { file in
+      try localFileSystem.writeFileContents(file.path) { $0 <<< "-frontend\n-print-target-info\n" }
+      let args = try Driver.expandResponseFiles(["swift", "@/dev/fd/\(file.fileHandle.fileDescriptor)"], fileSystem: localFileSystem, diagnosticsEngine: diags)
+      XCTAssertEqual(args, ["swift", "-frontend", "-print-target-info"])
+    }
+  }
+
   func testUsingResponseFiles() throws {
     let manyArgs = (1...20000).map { "-DTEST_\($0)" }
     // Needs response file
