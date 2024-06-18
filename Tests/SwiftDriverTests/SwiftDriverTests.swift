@@ -6792,11 +6792,12 @@ final class SwiftDriverTests: XCTestCase {
 
     // Embedded Wasm link job
     do {
-      var driver = try Driver(args: ["swiftc", "-target", "wasm32-none-none-wasm", "test.o", "-enable-experimental-feature", "Embedded", "-wmo", "-o", "a.wasm"], env: env)
+      var driver = try Driver(args: ["swiftc", "-target", "wasm32-none-none-wasm", "test.o", "-enable-experimental-feature", "Embedded", "-wmo", "-nostdlib", "-o", "a.wasm"], env: env)
       let plannedJobs = try driver.planBuild()
       XCTAssertEqual(plannedJobs.count, 2)
       let _ /*autolinkJob*/ = plannedJobs[0]
       let linkJob = plannedJobs[1]
+      XCTAssertTrue(linkJob.commandLine.contains(.flag("-nostdlib")))
       XCTAssertFalse(linkJob.commandLine.contains(.flag("-force_load")))
       XCTAssertFalse(linkJob.commandLine.contains(.flag("-rpath")))
       XCTAssertFalse(linkJob.commandLine.contains(.flag("-lswiftCore")))
@@ -6805,19 +6806,19 @@ final class SwiftDriverTests: XCTestCase {
 
     do {
       let diags = DiagnosticsEngine()
-      var driver = try Driver(args: ["swiftc", "-target", "arm64-apple-macosx10.13",  "test.swift", "-enable-experimental-feature", "Embedded", "-parse-as-library", "-wmo", "-o", "a.out", "-module-name", "main", "-enable-library-evolution"], diagnosticsEngine: diags)
+      var driver = try Driver(args: ["swiftc", "-target", "arm64-apple-macosx10.13", "test.swift", "-enable-experimental-feature", "Embedded", "-parse-as-library", "-wmo", "-o", "a.out", "-module-name", "main", "-enable-library-evolution"], diagnosticsEngine: diags)
       _ = try driver.planBuild()
       XCTAssertTrue(diags.diagnostics.first!.message.text == Diagnostic.Message.error_no_library_evolution_embedded.text)
     } catch _ { }
     do {
       let diags = DiagnosticsEngine()
-      var driver = try Driver(args: ["swiftc", "-target", "arm64-apple-macosx10.13",  "test.swift", "-enable-experimental-feature", "Embedded", "-parse-as-library", "-o", "a.out", "-module-name", "main"], diagnosticsEngine: diags)
+      var driver = try Driver(args: ["swiftc", "-target", "arm64-apple-macosx10.13", "test.swift", "-enable-experimental-feature", "Embedded", "-parse-as-library", "-o", "a.out", "-module-name", "main"], diagnosticsEngine: diags)
       _ = try driver.planBuild()
       XCTAssertTrue(diags.diagnostics.first!.message.text == Diagnostic.Message.error_need_wmo_embedded.text)
     } catch _ { }
     do {
       let diags = DiagnosticsEngine()
-      var driver = try Driver(args: ["swiftc", "-target", "arm64-apple-macosx10.13",  "test.swift", "-enable-experimental-feature", "Embedded", "-parse-as-library", "-wmo", "-o", "a.out", "-module-name", "main", "-enable-objc-interop"], diagnosticsEngine: diags)
+      var driver = try Driver(args: ["swiftc", "-target", "arm64-apple-macosx10.13", "test.swift", "-enable-experimental-feature", "Embedded", "-parse-as-library", "-wmo", "-o", "a.out", "-module-name", "main", "-enable-objc-interop"], diagnosticsEngine: diags)
       _ = try driver.planBuild()
       XCTAssertTrue(diags.diagnostics.first!.message.text == Diagnostic.Message.error_no_objc_interop_embedded.text)
     } catch _ { }
