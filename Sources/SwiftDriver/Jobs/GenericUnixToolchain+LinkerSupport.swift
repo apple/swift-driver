@@ -290,7 +290,7 @@ extension GenericUnixToolchain {
       commandLine.appendPath(outputFile)
       return try resolvedTool(clangTool, pathOverride: clangPath)
     case .staticLibrary:
-      // We're using 'ar' as a linker
+      // We're using 'llvm-ar' as a linker
       commandLine.appendFlag("crs")
       commandLine.appendPath(outputFile)
 
@@ -298,12 +298,7 @@ extension GenericUnixToolchain {
                             lto == nil ? $0.type == .object
                                        : $0.type == .object || $0.type == .llvmBitcode
                          }.map { .path($0.file) })
-      if targetTriple.environment == .android {
-        // Always use the LTO archiver llvm-ar for Android
-        return try resolvedTool(.staticLinker(.llvmFull))
-      } else {
-        return try resolvedTool(.staticLinker(lto))
-      }
+      return try resolvedTool(.staticLinker(.llvmFull))
     }
 
   }

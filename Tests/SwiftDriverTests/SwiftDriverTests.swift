@@ -2227,7 +2227,8 @@ final class SwiftDriverTests: XCTestCase {
 
       let linkJob = plannedJobs[3]
       let cmd = linkJob.commandLine
-      // we'd expect "ar crs libTest.a foo.o bar.o"
+      // we'd expect "llvm-ar crs libTest.a foo.o bar.o"
+      XCTAssertTrue(linkJob.tool.name.contains("llvm-ar"))
       XCTAssertTrue(cmd.contains(.flag("crs")))
       XCTAssertTrue(commandContainsTemporaryPath(cmd, "foo.o"))
       XCTAssertTrue(commandContainsTemporaryPath(cmd, "bar.o"))
