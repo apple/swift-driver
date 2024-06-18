@@ -651,8 +651,11 @@ extension Option {
   public static let outputFilelist: Option = Option("-output-filelist", .separate, attributes: [.frontend, .noDriver, .cacheInvariant], helpText: "Specify outputs in a file rather than on the command line")
   public static let O: Option = Option("-O", .flag, attributes: [.frontend, .moduleInterface], helpText: "Compile with optimizations", group: .O)
   public static let o: Option = Option("-o", .joinedOrSeparate, attributes: [.frontend, .noInteractive, .autolinkExtract, .moduleWrap, .indent, .argumentIsPath, .cacheInvariant], metaVar: "<file>", helpText: "Write output to <file>")
+  public static let packageAvailableModules: Option = Option("-package-available-modules", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild, .argumentIsPath], helpText: "JSON file describing the modules that are available within the enclosing package")
   public static let packageDescriptionVersion: Option = Option("-package-description-version", .separate, attributes: [.helpHidden, .frontend, .moduleInterface], metaVar: "<vers>", helpText: "The version number to be applied on the input for the PackageDescription availability kind")
+  public static let packageManifest: Option = Option("-package-manifest", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild, .argumentIsPath], helpText: "The path to the package manifest in which this source file resides")
   public static let packageName: Option = Option("-package-name", .separate, attributes: [.frontend, .moduleInterface], helpText: "Name of the package the module belongs to")
+  public static let packageTargetName: Option = Option("-package-target-name", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild], helpText: "The name of the target corresponding to this module within the enclosing package")
   public static let parallelScan: Option = Option("-parallel-scan", .flag, attributes: [.frontend, .noDriver], helpText: "Perform dependency scanning in-parallel.")
   public static let parseAsLibrary: Option = Option("-parse-as-library", .flag, attributes: [.frontend, .noInteractive], helpText: "Parse the input file(s) as libraries, not scripts")
   public static let parseSil: Option = Option("-parse-sil", .flag, attributes: [.frontend, .noInteractive], helpText: "Parse the input file as SIL code, not Swift source")
@@ -781,7 +784,6 @@ extension Option {
   public static let suppressStaticExclusivitySwap: Option = Option("-suppress-static-exclusivity-swap", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Suppress static violations of exclusive access with swap()")
   public static let suppressWarnings: Option = Option("-suppress-warnings", .flag, attributes: [.frontend], helpText: "Suppress all warnings")
   public static let swiftAsyncFramePointerEQ: Option = Option("-swift-async-frame-pointer=", .joined, attributes: [.helpHidden, .frontend, .noDriver], helpText: "One of 'auto', 'always' or 'never'")
-  public static let swiftModuleCrossImport: Option = Option("-swift-module-cross-import", .multiArg, attributes: [.frontend, .noDriver], metaVar: "<moduleName> <crossImport.swiftoverlay>", helpText: "Specify the cross import module", numArgs: 2)
   public static let swiftModuleFile: Option = Option("-swift-module-file=", .joined, attributes: [.frontend, .noDriver], metaVar: "<name>=<path>", helpText: "Specify Swift module input explicitly built from textual interface")
   public static let swiftOnly: Option = Option("-swift-only", .flag, attributes: [.noDriver], helpText: "Only include APIs defined from Swift source")
   public static let swiftOnly_: Option = Option("--swift-only", .flag, alias: Option.swiftOnly, attributes: [.noDriver], helpText: "Only include APIs defined from Swift source")
@@ -1514,8 +1516,11 @@ extension Option {
       Option.outputFilelist,
       Option.O,
       Option.o,
+      Option.packageAvailableModules,
       Option.packageDescriptionVersion,
+      Option.packageManifest,
       Option.packageName,
+      Option.packageTargetName,
       Option.parallelScan,
       Option.parseAsLibrary,
       Option.parseSil,
@@ -1644,7 +1649,6 @@ extension Option {
       Option.suppressStaticExclusivitySwap,
       Option.suppressWarnings,
       Option.swiftAsyncFramePointerEQ,
-      Option.swiftModuleCrossImport,
       Option.swiftModuleFile,
       Option.swiftOnly,
       Option.swiftOnly_,

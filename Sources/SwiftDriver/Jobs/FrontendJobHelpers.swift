@@ -290,6 +290,12 @@ extension Driver {
         .experimentalClangImporterDirectCc1Scan, from: &parsedOptions)
     }
 
+    if isFrontendArgSupported(.packageAvailableModules) {
+      try commandLine.appendAll(.packageManifest, from: &parsedOptions)
+      try commandLine.appendAll(.packageTargetName, from: &parsedOptions)
+      try commandLine.appendAll(.packageAvailableModules, from: &parsedOptions)
+    }
+
     // Expand the -experimental-hermetic-seal-at-link flag
     if parsedOptions.hasArgument(.experimentalHermeticSealAtLink) {
       commandLine.appendFlag("-enable-llvm-vfe")
