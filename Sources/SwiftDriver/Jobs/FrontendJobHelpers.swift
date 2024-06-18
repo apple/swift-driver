@@ -501,6 +501,11 @@ extension Driver {
     if !hasToolchainStdlib {
       try addPluginPathArguments(commandLine: &commandLine)
     }
+
+    if let passPluginPath = parsedOptions.getLastArgument(.loadPassPluginEQ),
+        isFrontendArgSupported(.loadPassPluginEQ) {
+      commandLine.appendFlag("-load-pass-plugin=\(passPluginPath.asSingle)")
+    }
   }
 
   mutating func addBridgingHeaderPCHCacheKeyArguments(commandLine: inout [Job.ArgTemplate],

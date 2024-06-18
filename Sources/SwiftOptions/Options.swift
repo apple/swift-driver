@@ -586,6 +586,7 @@ extension Option {
   public static let linkObjcRuntime: Option = Option("-link-objc-runtime", .flag, attributes: [.doesNotAffectIncrementalBuild], helpText: "Deprecated")
   public static let lldbRepl: Option = Option("-lldb-repl", .flag, attributes: [.helpHidden, .noBatch], helpText: "LLDB-enhanced REPL mode", group: .modes)
   public static let reuseDependencyScanCache: Option = Option("-load-dependency-scan-cache", .flag, attributes: [.frontend, .noDriver], helpText: "After performing a dependency scan, serialize the scanner's internal state.")
+  public static let loadPassPluginEQ: Option = Option("-load-pass-plugin=", .joined, attributes: [.frontend, .argumentIsPath], metaVar: "<path>", helpText: "Load LLVM pass plugin from a dynamic shared object file.")
   public static let loadPluginExecutable: Option = Option("-load-plugin-executable", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild, .argumentIsPath], metaVar: "<path>#<module-names>", helpText: "Path to a compiler plugin executable and a comma-separated list of module names where the macro types are declared", group: .pluginSearch)
   public static let loadPluginLibrary: Option = Option("-load-plugin-library", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild, .argumentIsPath], metaVar: "<path>", helpText: "Path to a dynamic library containing compiler plugins such as macros", group: .pluginSearch)
   public static let locale: Option = Option("-locale", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild], metaVar: "<locale-code>", helpText: "Choose a language for diagnostic messages")
@@ -1449,6 +1450,7 @@ extension Option {
       Option.linkObjcRuntime,
       Option.lldbRepl,
       Option.reuseDependencyScanCache,
+      Option.loadPassPluginEQ,
       Option.loadPluginExecutable,
       Option.loadPluginLibrary,
       Option.locale,
