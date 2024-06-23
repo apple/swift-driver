@@ -28,11 +28,13 @@ import Dispatch
 import WinSDK
 #endif
 
-import enum TSCBasic.ProcessEnv
+import struct TSCBasic.AbsolutePath
 import func TSCBasic.exec
+import enum TSCBasic.ProcessEnv
 import class TSCBasic.DiagnosticsEngine
 import class TSCBasic.Process
 import class TSCBasic.ProcessSet
+import func TSCBasic.resolveSymlinks
 import protocol TSCBasic.DiagnosticData
 import var TSCBasic.localFileSystem
 
@@ -84,12 +86,17 @@ do {
   }
 
   let (mode, arguments) = try Driver.invocationRunMode(forArgs: CommandLine.arguments)
-
   if case .subcommand(let subcommand) = mode {
     // We are running as a subcommand, try to find the subcommand adjacent to the executable we are running as.
     // If we didn't find the tool there, let the OS search for it.
-    let subcommandPath = Process.findExecutable(CommandLine.arguments[0])?.parentDirectory.appending(component: subcommand)
-                         ?? Process.findExecutable(subcommand)
+    let subcommandPath: AbsolutePath?
+    if let executablePath = Process.findExecutable(CommandLine.arguments[0]) {
+      // Attempt to resolve the executable symlink in order to be able to
+      // resolve compiler-adjacent library locations.
+      subcommandPath = try TSCBasic.resolveSymlinks(executablePath).parentDirectory.appending(component: subcommand)
+    } else {
+      subcommandPath = Process.findExecutable(subcommand)
+    }
 
     guard let subcommandPath = subcommandPath,
           localFileSystem.exists(subcommandPath) else {
