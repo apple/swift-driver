@@ -196,7 +196,10 @@ extension Toolchain {
 
   /// - Returns: String in the form of: `SWIFT_DRIVER_TOOLNAME_EXEC`
   private func envVarName(for toolName: String) -> String {
-    let lookupName = toolName.replacingOccurrences(of: "-", with: "_").uppercased()
+    let lookupName = toolName
+        .replacingOccurrences(of: "-", with: "_")
+        .replacingOccurrences(of: "+", with: "X")
+        .uppercased()
     return "SWIFT_DRIVER_\(lookupName)_EXEC"
   }
 

@@ -6827,6 +6827,41 @@ final class SwiftDriverTests: XCTestCase {
     XCTAssertEqual(jobs.first!.tool.name, swiftHelp.pathString)
   }
 
+  func testSwiftClangOverride() throws {
+    var env = ProcessEnv.vars
+    let swiftClang = try AbsolutePath(validating: "/A/Path/swift-clang")
+    env["SWIFT_DRIVER_CLANG_EXEC"] = swiftClang.pathString
+
+    var driver = try Driver(
+      args: ["swiftc", "-emit-library", "foo.swift", "bar.o", "-o", "foo.l"],
+      env: env)
+    let jobs = try driver.planBuild()
+    XCTAssertEqual(jobs.count, 2)
+    let linkJob = jobs[1]
+    XCTAssertEqual(linkJob.tool.name, swiftClang.pathString)
+  }
+
+  func testSwiftClangxxOverride() throws {
+#if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
+      throw XCTSkip("Darwin always uses `clang` to link")
+#else
+    var env = ProcessEnv.vars
+    let swiftClang = try AbsolutePath(validating: "/A/Path/swift-clang")
+    let swiftClangxx = try AbsolutePath(validating: "/A/Path/swift-clang++")
+    env["SWIFT_DRIVER_CLANG_EXEC"] = swiftClang.pathString
+    env["SWIFT_DRIVER_CLANGXX_EXEC"] = swiftClangxx.pathString
+
+    var driver = try Driver(
+      args: ["swiftc", "-cxx-interoperability-mode=swift-5.9", "-emit-library",
+             "foo.swift", "bar.o", "-o", "foo.l"],
+      env: env)
+
+    let jobs = try driver.planBuild()
+    let linkJob = jobs.last!
+    XCTAssertEqual(linkJob.tool.name, swiftClangxx.pathString)
+#endif
+  }
+
   func testSourceInfoFileEmitOption() throws {
     // implicit
     do {
