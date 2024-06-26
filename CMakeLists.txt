@@ -31,6 +31,12 @@ set(CMAKE_Swift_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
 set(CMAKE_Swift_LANGUAGE_VERSION 5)
 set(CMAKE_Swift_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/swift)
 
+# Generate build-ids
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin"
+    AND NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  add_link_options("LINKER:--build-id=sha1")
+endif()
+
 # ensure Swift compiler can find _CSwiftScan
 add_compile_options($<$<COMPILE_LANGUAGE:Swift>:-I$<SEMICOLON>${CMAKE_CURRENT_SOURCE_DIR}/Sources/CSwiftScan/include>)
 

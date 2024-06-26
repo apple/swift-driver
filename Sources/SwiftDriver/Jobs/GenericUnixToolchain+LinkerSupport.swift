@@ -106,6 +106,19 @@ extension GenericUnixToolchain {
         commandLine.appendFlag("-pie")
       }
 
+      // On some platforms we want to enable --build-id
+      if targetTriple.os == .linux
+           || targetTriple.os == .freeBSD
+           || targetTriple.os == .openbsd
+           || parsedOptions.hasArgument(.buildId) {
+        commandLine.appendFlag("-Xlinker")
+        if let buildId = parsedOptions.getLastArgument(.buildId)?.asSingle {
+          commandLine.appendFlag("--build-id=\(buildId)")
+        } else {
+          commandLine.appendFlag("--build-id")
+        }
+      }
+
       let staticStdlib = parsedOptions.hasFlag(positive: .staticStdlib,
                                                negative: .noStaticStdlib,
                                                    default: false)
