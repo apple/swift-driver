@@ -58,6 +58,8 @@ extension Option {
   public static let bridgingHeaderDirectoryForPrint: Option = Option("-bridging-header-directory-for-print", .separate, attributes: [.helpHidden, .frontend, .noDriver], metaVar: "<path>", helpText: "Directory for bridging header to be printed in compatibility header")
   public static let bridgingHeaderPchKey: Option = Option("-bridging-header-pch-key", .separate, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Cache Key for bridging header pch")
   public static let bsdk: Option = Option("-bsdk", .joinedOrSeparate, attributes: [.noDriver, .argumentIsPath], helpText: "path to the baseline SDK to import frameworks")
+  public static let buildIdEQ: Option = Option("-build-id=", .joined, alias: Option.buildId)
+  public static let buildId: Option = Option("-build-id", .joinedOrSeparate, metaVar: "<build-id>", helpText: "Specify the build ID argument passed to linker")
   public static let buildModuleFromParseableInterface: Option = Option("-build-module-from-parseable-interface", .flag, alias: Option.compileModuleFromInterface, attributes: [.helpHidden, .frontend, .noDriver], group: .modes)
   public static let bypassBatchModeChecks: Option = Option("-bypass-batch-mode-checks", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Bypass checks for batch-mode errors.")
   public static let bypassResilience: Option = Option("-bypass-resilience-checks", .flag, attributes: [.helpHidden, .frontend, .noDriver], helpText: "Ignore all checks for module resilience.")
@@ -921,6 +923,8 @@ extension Option {
       Option.bridgingHeaderDirectoryForPrint,
       Option.bridgingHeaderPchKey,
       Option.bsdk,
+      Option.buildIdEQ,
+      Option.buildId,
       Option.buildModuleFromParseableInterface,
       Option.bypassBatchModeChecks,
       Option.bypassResilience,
