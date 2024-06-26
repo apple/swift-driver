@@ -781,10 +781,19 @@ extension Driver {
     guard isFrontendArgSupported(.pluginPath) else {
       return
     }
+    let pluginPathRoot = VirtualPath.absolute(try toolchain.executableDir.parentDirectory)
+
+    if isFrontendArgSupported(.inProcessPluginServerPath) {
+      commandLine.appendFlag(.inProcessPluginServerPath)
+#if os(Windows)
+      commandLine.appendPath(pluginPathRoot.appending(components: "bin", sharedLibraryName("SwiftInProcPluginServer")))
+#else
+      commandLine.appendPath(pluginPathRoot.appending(components: "lib", "swift", "host", sharedLibraryName("libSwiftInProcPluginServer")))
+#endif
+    }
 
     // Default paths for compiler plugins found within the toolchain
     // (loaded as shared libraries).
-    let pluginPathRoot = VirtualPath.absolute(try toolchain.executableDir.parentDirectory)
     commandLine.appendFlag(.pluginPath)
     commandLine.appendPath(pluginPathRoot.pluginPath)
 

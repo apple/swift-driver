@@ -543,6 +543,7 @@ extension Option {
   public static let importPrescan: Option = Option("-import-prescan", .flag, attributes: [.frontend, .noDriver], helpText: "When performing a dependency scan, only identify all imports of the main Swift module sources")
   public static let importUnderlyingModule: Option = Option("-import-underlying-module", .flag, attributes: [.frontend, .noInteractive], helpText: "Implicitly imports the Objective-C half of a module")
   public static let inPlace: Option = Option("-in-place", .flag, attributes: [.noInteractive, .noBatch, .indent], helpText: "Overwrite input file with formatted file.", group: .codeFormatting)
+  public static let inProcessPluginServerPath: Option = Option("-in-process-plugin-server-path", .separate, attributes: [.frontend, .argumentIsPath], helpText: "Path to dynamic library plugin server")
   public static let includeSpiSymbols: Option = Option("-include-spi-symbols", .flag, attributes: [.helpHidden, .frontend, .noInteractive, .supplementaryOutput], helpText: "Add symbols with SPI information to the symbol graph")
   public static let incremental: Option = Option("-incremental", .flag, attributes: [.helpHidden, .noInteractive, .doesNotAffectIncrementalBuild], helpText: "Perform an incremental build if possible")
   public static let indentSwitchCase: Option = Option("-indent-switch-case", .flag, attributes: [.noInteractive, .noBatch, .indent], helpText: "Indent cases in switch statements.", group: .codeFormatting)
@@ -1393,6 +1394,7 @@ extension Option {
       Option.importPrescan,
       Option.importUnderlyingModule,
       Option.inPlace,
+      Option.inProcessPluginServerPath,
       Option.includeSpiSymbols,
       Option.incremental,
       Option.indentSwitchCase,
