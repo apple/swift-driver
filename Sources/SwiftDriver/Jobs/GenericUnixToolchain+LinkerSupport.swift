@@ -147,14 +147,25 @@ extension GenericUnixToolchain {
         }
       }
 
+      if let sdk = parsedOptions.getLastArgument(.sdk)?.asSingle ?? env["SDKROOT"], !sdk.isEmpty {
+        for libpath in targetInfo.runtimeLibraryImportPaths {
+          commandLine.appendFlag(.L)
+          commandLine.appendPath(VirtualPath.lookup(libpath.path))
+        }
+      }
+
       if !isEmbeddedEnabled && !parsedOptions.hasArgument(.nostartfiles) {
-        let swiftrtPath = VirtualPath.lookup(targetInfo.runtimeResourcePath.path)
-          .appending(
-            components: targetTriple.platformName() ?? "",
-            String(majorArchitectureName(for: targetTriple)),
-            "swiftrt.o"
-          )
-        commandLine.appendPath(swiftrtPath)
+        let rsrc: VirtualPath
+        if let sdk = parsedOptions.getLastArgument(.sdk)?.asSingle ?? env["SDKROOT"], !sdk.isEmpty {
+          rsrc = try VirtualPath(path: AbsolutePath(validating: sdk)
+                                        .appending(components: "usr", "lib", "swift")
+                                        .pathString)
+        } else {
+          rsrc = VirtualPath.lookup(targetInfo.runtimeResourcePath.path)
+        }
+        let platform: String = targetTriple.platformName() ?? ""
+        let architecture: String = majorArchitectureName(for: targetTriple)
+        commandLine.appendPath(rsrc.appending(components: platform, architecture, "swiftrt.o"))
       }
 
       // If we are linking statically, we need to add all
@@ -194,7 +205,25 @@ extension GenericUnixToolchain {
         commandLine.appendPath(try VirtualPath(path: opt.argument.asSingle))
       }
 
-      if let path = targetInfo.sdkPath?.path {
+      if targetTriple.environment == .android {
+        if let ndk = env["ANDROID_NDK_ROOT"] {
+          var sysroot: AbsolutePath =
+                try AbsolutePath(validating: ndk)
+                    .appending(components: "toolchains", "llvm", "prebuilt")
+#if arch(x86_64)
+#if os(Windows)
+                    .appending(component: "windows-x86_64")
+#elseif os(Linux)
+                    .appending(component: "linux-x86_64")
+#else
+                    .appending(component: "darwin-x86_64")
+#endif
+#endif
+                    .appending(component: "sysroot")
+          commandLine.appendFlag("--sysroot")
+          commandLine.appendPath(sysroot)
+        }
+      } else if let path = targetInfo.sdkPath?.path {
         commandLine.appendFlag("--sysroot")
         commandLine.appendPath(VirtualPath.lookup(path))
       }

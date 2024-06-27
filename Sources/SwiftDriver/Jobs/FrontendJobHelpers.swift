@@ -182,6 +182,26 @@ extension Driver {
     try commandLine.appendAll(.F, .Fsystem, from: &parsedOptions)
     try commandLine.appendAll(.vfsoverlay, from: &parsedOptions)
 
+    if targetTriple.environment == .android {
+        if let ndk = env["ANDROID_NDK_ROOT"] {
+            var sysroot: AbsolutePath =
+                try AbsolutePath(validating: ndk)
+                    .appending(components: "toolchains", "llvm", "prebuilt")
+#if arch(x86_64)
+#if os(Windows)
+                    .appending(component: "windows-x86_64")
+#elseif os(Linux)
+                    .appending(component: "linux-x86_64")
+#else
+                    .appending(component: "darwin-x86_64")
+#endif
+#endif
+                    .appending(component: "sysroot")
+            commandLine.appendFlag("-sysroot")
+            commandLine.appendFlag(sysroot.pathString)
+        }
+    }
+
     if let gccToolchain = parsedOptions.getLastArgument(.gccToolchain) {
         appendXccFlag("--gcc-toolchain=\(gccToolchain.asSingle)")
     }
