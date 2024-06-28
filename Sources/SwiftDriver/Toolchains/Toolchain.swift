@@ -15,6 +15,7 @@ import class Foundation.Bundle
 
 import func TSCBasic.getEnvSearchPaths
 import func TSCBasic.lookupExecutablePath
+import protocol TSCBasic.DiagnosticData
 import class TSCBasic.DiagnosticsEngine
 import protocol TSCBasic.FileSystem
 import struct TSCBasic.AbsolutePath
@@ -215,17 +216,25 @@ extension Toolchain {
   /// looks in the `executableDir`, `xcrunFind` or in the `searchPaths`.
   /// - Parameter executable: executable to look for [i.e. `swift`]. Executable suffix (eg. `.exe`) should be omitted.
   func lookup(executable: String) throws -> AbsolutePath {
+    // 1. Check the `SWIFT_DRIVER_<TOOLNAME>_EXEC` override.
     if let overrideString = envVar(forExecutable: executable),
        let path = try? AbsolutePath(validating: overrideString) {
+      if !fallbackToExecutableDefaultPath && !fileSystem.isExecutableFile(path) {
+        throw ToolchainError.notAValidExecutablePath(path.pathString)
+      }
       return path
+    // 2. If `-tools-directory` is set, check there.
     } else if let toolDir = toolDirectory,
               let path = lookupExecutablePath(filename: executableName(executable), currentWorkingDirectory: nil, searchPaths: [toolDir]) {
-      // Looking for tools from the tools directory.
       return path
+    // 3. Perform lookup relative to the driver's executable
     } else if let path = lookupExecutablePath(filename: executableName(executable), currentWorkingDirectory: nil, searchPaths: [try executableDir]) {
       return path
+    // 4. Attempt lookup with `xcrun --find`.
     } else if let path = try? xcrunFind(executable: executableName(executable)) {
       return path
+    // 5. If querying not the compiler frontend itself and the above attempts failed,
+    //    attempt to resolve adjacent to the compiler frontend.
     } else if !["swift-frontend", "swift"].contains(executable),
               let parentDirectory = try? getToolPath(.swiftCompiler).parentDirectory,
               try parentDirectory != executableDir,
@@ -233,11 +242,15 @@ extension Toolchain {
       // If the driver library's client and the frontend are in different directories,
       // try looking for tools next to the frontend.
       return path
+    // 6. Perform lookup in the toolchain search paths (e.g. $PATH)
     } else if let path = lookupExecutablePath(filename: executableName(executable), searchPaths: searchPaths) {
       return path
+    // 7. Attempt lookup of `swift` for the compiler frontned
+    //    FIXME: we should remove this now
     } else if executable == "swift-frontend" {
       // Temporary shim: fall back to looking for "swift" before failing.
       return try lookup(executable: "swift")
+    // 8. For testing purposes, attempt lookup in the system "default" paths
     } else if fallbackToExecutableDefaultPath {
       if self is WindowsToolchain {
         return try getToolPath(.swiftCompiler)
@@ -247,7 +260,7 @@ extension Toolchain {
         return try AbsolutePath(validating: "/usr/bin/" + executable)
       }
     } else {
-      throw ToolchainError.unableToFind(tool: executable)
+      throw ToolchainError.unableToFind(executable)
     }
   }
 
@@ -302,7 +315,7 @@ extension Toolchain {
   private func xcrunFind(executable: String) throws -> AbsolutePath {
     let xcrun = "xcrun"
     guard lookupExecutablePath(filename: xcrun, searchPaths: searchPaths) != nil else {
-      throw ToolchainError.unableToFind(tool: xcrun)
+      throw ToolchainError.unableToFind(xcrun)
     }
 
     let path = try executor.checkNonZeroExit(
@@ -368,6 +381,17 @@ extension Toolchain {
   }
 }
 
-@_spi(Testing) public enum ToolchainError: Swift.Error {
-  case unableToFind(tool: String)
+@_spi(Testing) public enum ToolchainError: Swift.Error, Equatable, DiagnosticData {
+  case unableToFind(String)
+  case notAValidExecutablePath(String)
+
+  public var description: String {
+    switch self {
+    case .unableToFind(let tool):
+      return "unable to locate tool: '\(tool)'"
+    case .notAValidExecutablePath(let path):
+      return "not a valid executable: \(path)"
+
+    }
+  }
 }

@@ -79,6 +79,7 @@ final class SwiftDriverTests: XCTestCase {
     // so there is no swift-help in the toolchain yet. Set the environment variable
     // as if we had found it for the purposes of testing build planning.
     var env = ProcessEnv.vars
+    env["SWIFT_DRIVER_TESTS_ENABLE_EXEC_PATH_FALLBACK"] = "1"
     env["SWIFT_DRIVER_SWIFT_HELP_EXEC"] = "/tmp/.test-swift-help"
     return env
   }
@@ -2419,6 +2420,7 @@ final class SwiftDriverTests: XCTestCase {
 
   func testWebAssemblyUnsupportedFeatures() throws {
     var env = ProcessEnv.vars
+    env["SWIFT_DRIVER_TESTS_ENABLE_EXEC_PATH_FALLBACK"] = "1"
     env["SWIFT_DRIVER_SWIFT_AUTOLINK_EXTRACT_EXEC"] = "/garbage/swift-autolink-extract"
     do {
       var driver = try Driver(args: ["swift", "-target", "wasm32-unknown-wasi", "foo.swift"], env: env)
@@ -3172,7 +3174,7 @@ final class SwiftDriverTests: XCTestCase {
         "-emit-library", "-driver-filelist-threshold=0"
     ])
 
-    var jobs = try driver.planBuild()
+    let jobs = try driver.planBuild()
     XCTAssertEqual(jobs.count, 4)
     XCTAssertEqual(getFileListElements(for: "-filelist", job: jobs[2]),
         [.temporary(try .init(validating: "hello-1.o"))])
@@ -4465,6 +4467,7 @@ final class SwiftDriverTests: XCTestCase {
       // Drop SWIFT_DRIVER_CLANG_EXEC from the environment so it doesn't
       // interfere with tool lookup.
       var env = ProcessEnv.vars
+      env["SWIFT_DRIVER_TESTS_ENABLE_EXEC_PATH_FALLBACK"] = "1"
       env.removeValue(forKey: "SWIFT_DRIVER_CLANG_EXEC")
 
       var driver = try Driver(args: ["swiftc",
@@ -4892,6 +4895,7 @@ final class SwiftDriverTests: XCTestCase {
       // As per Unix conventions, /var/empty is expected to exist and be empty.
       // This gives us a non-existent path that we can use for libtool which
       // allows us to run this this on non-Darwin platforms.
+      env["SWIFT_DRIVER_TESTS_ENABLE_EXEC_PATH_FALLBACK"] = "1"
       env["SWIFT_DRIVER_LIBTOOL_EXEC"] = "/var/empty/libtool"
 
       // No dSYM generation (-g -emit-library -static)
@@ -6751,6 +6755,7 @@ final class SwiftDriverTests: XCTestCase {
 
   func testEmbeddedSwiftOptions() throws {
     var env = ProcessEnv.vars
+    env["SWIFT_DRIVER_TESTS_ENABLE_EXEC_PATH_FALLBACK"] = "1"
     env["SWIFT_DRIVER_SWIFT_AUTOLINK_EXTRACT_EXEC"] = "/garbage/swift-autolink-extract"
 
     do {
@@ -6868,6 +6873,7 @@ final class SwiftDriverTests: XCTestCase {
     // better override.
     var env = ProcessEnv.vars
     let swiftHelp: AbsolutePath = try AbsolutePath(validating: "/usr/bin/nonexistent-swift-help")
+    env["SWIFT_DRIVER_TESTS_ENABLE_EXEC_PATH_FALLBACK"] = "1"
     env["SWIFT_DRIVER_SWIFT_HELP_EXEC"] = swiftHelp.pathString
     env["SWIFT_DRIVER_CLANG_EXEC"] = "/usr/bin/clang"
     var driver = try Driver(
@@ -6881,6 +6887,7 @@ final class SwiftDriverTests: XCTestCase {
   func testSwiftClangOverride() throws {
     var env = ProcessEnv.vars
     let swiftClang = try AbsolutePath(validating: "/A/Path/swift-clang")
+    env["SWIFT_DRIVER_TESTS_ENABLE_EXEC_PATH_FALLBACK"] = "1"
     env["SWIFT_DRIVER_CLANG_EXEC"] = swiftClang.pathString
 
     var driver = try Driver(
