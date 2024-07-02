@@ -7462,7 +7462,7 @@ final class SwiftDriverTests: XCTestCase {
   func pluginPathTest(platform: String, sdk: String, searchPlatform: String) throws {
     let sdkRoot = try testInputsPath.appending(
       components: ["Platform Checks", "\(platform).platform", "Developer", "SDKs", "\(sdk).sdk"])
-    var driver = try Driver(args: ["swiftc", "-typecheck", "foo.swift", "-sdk", VirtualPath.absolute(sdkRoot).name, "-plugin-path", "PluginA", "-external-plugin-path", "Plugin~B#Bexe", "-load-plugin-library", "PluginB2", "-plugin-path", "PluginC", "-working-directory", "/tmp"])
+    var driver = try Driver(args: ["swiftc", "-typecheck", "foo.swift", "-sdk", VirtualPath.absolute(sdkRoot).name, "-plugin-path", "PluginA", "-external-plugin-path", "Plugin~B#Bexe", "-load-plugin-library", "PluginB2", "-plugin-path", "PluginC", "-load-plugin-executable", "PluginD#PluginD", "-working-directory", "/tmp"])
     guard driver.isFrontendArgSupported(.pluginPath) && driver.isFrontendArgSupported(.externalPluginPath) else {
       return
     }
@@ -7518,12 +7518,49 @@ final class SwiftDriverTests: XCTestCase {
     #endif
 
     XCTAssertTrue(job.commandLine.contains(.flag("-plugin-path")))
+    XCTAssertFalse(job.commandLine.contains(.flag("-load-plugin")))
 #if os(Windows)
     XCTAssertTrue(job.commandLine.contains(.path(.absolute(try driver.toolchain.executableDir.parentDirectory.appending(components: "bin")))))
 #else
     XCTAssertTrue(job.commandLine.contains(.path(.absolute(try driver.toolchain.executableDir.parentDirectory.appending(components: "lib", "swift", "host", "plugins")))))
     XCTAssertTrue(job.commandLine.contains(.path(.absolute(try driver.toolchain.executableDir.parentDirectory.appending(components: "local", "lib", "swift", "host", "plugins")))))
 #endif
+  }
+
+  func testWasmPlugins() throws {
+    let sdkRoot = try testInputsPath.appending(
+      components: ["Platform Checks", "iPhoneOS.platform", "Developer", "SDKs", "iPhoneOS13.0.sdk"])
+    let executor = try SwiftDriverExecutor(
+      diagnosticsEngine: DiagnosticsEngine(handlers: [Driver.stderrDiagnosticsHandler]),
+      processSet: ProcessSet(),
+      fileSystem: localFileSystem,
+      env: [:]
+    )
+    let executableDir = try AbsolutePath(validating: "/tmp/swift/bin")
+    var driver = try Driver(
+      args: ["swiftc", "-typecheck", "foo.swift", "-sdk", VirtualPath.absolute(sdkRoot).name, "-load-plugin-executable", "PluginA#ModuleA", "-load-plugin-executable", "PluginB.wasm#ModuleB", "-working-directory", "/tmp", "-load-plugin-library", "PluginC.dylib"],
+      executor: executor,
+      compilerExecutableDir: executableDir
+    )
+    try XCTSkipUnless(driver.isFrontendArgSupported(.loadPlugin))
+
+    let jobs = try driver.planBuild().removingAutolinkExtractJobs()
+    XCTAssertEqual(jobs.count, 1)
+    let job = jobs.first!
+
+    #if os(Windows)
+    let expectedWasmServerPath = executableDir.appending(component: "swift-plugin-server.exe")
+    #else
+    let expectedWasmServerPath = executableDir.appending(component: "swift-plugin-server")
+    #endif
+
+    // Check that the we have the plugin path
+    let pluginAIndex = try XCTUnwrap(job.commandLine.firstIndex(of: .path(.absolute(AbsolutePath(validating: "/tmp/PluginA#ModuleA")))))
+    let pluginBIndex = try XCTUnwrap(job.commandLine.firstIndex(of: .flag("/tmp/PluginB.wasm:\(expectedWasmServerPath)#ModuleB")))
+    let pluginCIndex = try XCTUnwrap(job.commandLine.firstIndex(of: .path(.absolute(AbsolutePath(validating: "/tmp/PluginC.dylib")))))
+
+    XCTAssertLessThan(pluginAIndex, pluginBIndex, "Order of options should be preserved")
+    XCTAssertLessThan(pluginBIndex, pluginCIndex, "Order of options should be preserved")
   }
 
   func testClangModuleValidateOnce() throws {

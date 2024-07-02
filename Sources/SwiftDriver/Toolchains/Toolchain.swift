@@ -371,3 +371,15 @@ extension Toolchain {
 @_spi(Testing) public enum ToolchainError: Swift.Error {
   case unableToFind(tool: String)
 }
+
+extension VirtualPath {
+  // Given a virtual path pointing into a toolchain/SDK/platform, produce the
+  // path to `swift-plugin-server`.
+  var pluginServerPath: VirtualPath {
+#if os(Windows)
+    self.appending(components: "bin", "swift-plugin-server.exe")
+#else
+    self.appending(components: "bin", "swift-plugin-server")
+#endif
+  }
+}

@@ -312,7 +312,10 @@ extension Driver {
     }
 
     // Emit user-provided plugin paths, in order.
-    if isFrontendArgSupported(.externalPluginPath) {
+    if isFrontendArgSupported(.loadPlugin) {
+      let options = parsedOptions.arguments(for: .pluginPath, .externalPluginPath, .loadPluginLibrary, .loadPluginExecutable, .loadPlugin)
+      try commandLine.append(contentsOf: handleWasmPlugins(options))
+    } else if isFrontendArgSupported(.externalPluginPath) {
       try commandLine.appendAll(.pluginPath, .externalPluginPath, .loadPluginLibrary, .loadPluginExecutable, from: &parsedOptions)
     } else if isFrontendArgSupported(.pluginPath) {
       try commandLine.appendAll(.pluginPath, .loadPluginLibrary, from: &parsedOptions)
@@ -810,6 +813,21 @@ extension Driver {
     commandLine.appendPath(pluginPathRoot.localPluginPath)
   }
 
+  /// Forward all plugin-related arguments, with special handling for Wasm plugins requested via `-load-plugin-executable`.
+  ///
+  /// Wasm plugins are updated to use `-load-plugin` with the plugin server.
+  private func handleWasmPlugins(_ options: [ParsedOption]) throws -> [ParsedOption] {
+    lazy var pluginServerPathResult = Result {
+      VirtualPath.absolute(try toolchain.executableDir.parentDirectory).pluginServerPath
+    }
+    return try options.map { option in
+      try option.handlingWasmPlugins(
+        // Not the same as `pluginServerPath: pluginServerPathResult.get`.
+        // We want to ensure that `pluginServerPathResult` is lazily initialized.
+        pluginServerPath: { try pluginServerPathResult.get() }
+      )
+    }
+  }
 
   /// If explicit dependency planner supports creating bridging header pch command.
   public func supportsBridgingHeaderPCHCommand() throws -> Bool {
@@ -941,5 +959,38 @@ extension ParsedOptions {
       let experimentalFeatures = self.arguments(for: .enableExperimentalFeature)
       return experimentalFeatures.map(\.argument).map(\.asSingle).contains("Embedded")
     }
+  }
+}
+
+extension ParsedOption {
+  /// Transforms the receiver to handle Wasm plugins.
+  ///
+  /// If the option is of the form `-load-plugin-executable foo.wasm`, it's updated to use
+  /// `-load-plugin` with the plugin server. Otherwise, it's returned unmodified.
+  fileprivate func handlingWasmPlugins(
+    pluginServerPath: () throws -> VirtualPath
+  ) throws -> ParsedOption {
+    guard option == .loadPluginExecutable else {
+      return self
+    }
+
+    let argument = argument.asSingle
+    guard let separator = argument.lastIndex(of: "#") else {
+      return self
+    }
+
+    let path = argument[..<separator]
+    guard path.hasSuffix(".wasm") else {
+      return self
+    }
+    let afterPath = argument[separator...]
+
+    let pluginServerPath = try pluginServerPath()
+
+    return ParsedOption(
+      option: .loadPlugin,
+      argument: .single("\(path):\(pluginServerPath)\(afterPath)"),
+      index: index
+    )
   }
 }

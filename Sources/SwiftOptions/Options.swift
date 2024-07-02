@@ -589,6 +589,7 @@ extension Option {
   public static let reuseDependencyScanCache: Option = Option("-load-dependency-scan-cache", .flag, attributes: [.frontend, .noDriver], helpText: "After performing a dependency scan, serialize the scanner's internal state.")
   public static let loadPluginExecutable: Option = Option("-load-plugin-executable", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild, .argumentIsPath], metaVar: "<path>#<module-names>", helpText: "Path to a compiler plugin executable and a comma-separated list of module names where the macro types are declared", group: .pluginSearch)
   public static let loadPluginLibrary: Option = Option("-load-plugin-library", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild, .argumentIsPath], metaVar: "<path>", helpText: "Path to a dynamic library containing compiler plugins such as macros", group: .pluginSearch)
+  public static let loadPlugin: Option = Option("-load-plugin", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild], metaVar: "<library-path>:<server-path>#<module-names>", helpText: "Path to a plugin library, a server to load it in, and a comma-separated list of module names where the macro types are declared", group: .pluginSearch)
   public static let locale: Option = Option("-locale", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild], metaVar: "<locale-code>", helpText: "Choose a language for diagnostic messages")
   public static let localizationPath: Option = Option("-localization-path", .separate, attributes: [.frontend, .doesNotAffectIncrementalBuild, .argumentIsPath], metaVar: "<path>", helpText: "Path to localized diagnostic messages directory")
   public static let location: Option = Option("-location", .separate, attributes: [.noDriver], metaVar: "<location>", helpText: "Filter nodes with the given location.")
@@ -1453,6 +1454,7 @@ extension Option {
       Option.reuseDependencyScanCache,
       Option.loadPluginExecutable,
       Option.loadPluginLibrary,
+      Option.loadPlugin,
       Option.locale,
       Option.localizationPath,
       Option.location,
